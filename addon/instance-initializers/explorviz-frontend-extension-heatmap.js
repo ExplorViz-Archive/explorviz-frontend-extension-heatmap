@@ -5,11 +5,11 @@ export function initialize(appInstance) {
   const service = appInstance.lookup("service:page-setup");
 
   if(service){
-    service.get("navbarRoutes").push("Heatmap");
+    service.get("navbarRoutes").push("heatmap");
   }
 
   Router.map(function() {
-    this.route("Heatmap");
+    this.route("heatmap");
   });
 }
 

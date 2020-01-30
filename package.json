@@ -1,13 +1,19 @@
 {
   "name": "explorviz-frontend-extension-heatmap",
-  "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "version": "0.0.1",
+  "description": "Heatmap extension for ExplorViz.",
   "keywords": [
-    "ember-addon"
+    "ember-addon",
+    "explorviz-frontend-extension",
+    "heatmap"
   ],
-  "repository": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ExplorViz/explorviz-frontend-extension-heatmap.git"
+  },
   "license": "MIT",
   "author": "",
+  "main": "index.js",
   "directories": {
     "doc": "doc",
     "test": "tests"
