@@ -1,4 +1,7 @@
 <div id="rendering">
-  <p>src: heatmap.hbs</p>
-  {{heatmap-rendering}}
+  {{!-- <p>src: heatmap.hbs</p> --}}
+  {{!-- {{heatmap-rendering}} --}}
+  <HeatmapRendering />
+  {{visualization/rendering/popups/popup-coordinator
+        popupData=additionalData.popupContent}}
 </div>
