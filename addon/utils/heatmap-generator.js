@@ -1,18 +1,23 @@
-export function generateHeatmap(height, width) {
-
-  var heatmap = [];
 
 
-  for (let h=0; h<height; h++) {
-    let row = [];
-    for(let w=0; w<width; w++) {
-      row[w] = Math.floor(Math.random()*100)-50;
+
+
+export function generateHeatmap(height, width, heatmap) {
+  let hm = [];
+  if (typeof heatmap !== 'undefined'){
+    hm = heatmap;
+  } else {
+    for (let h=0; h<height; h++) {
+      let row = [];
+      for(let w=0; w<width; w++) {
+        row[w] = Math.floor(Math.random()*100)-50;
+      }
+      hm.push(row);
     }
-    heatmap.push(row);
   }
-
-  console.log(heatmap);
-  return applyGradients(heatmap);
+  // eslint-disable-next-line no-console
+  console.log(hm);
+  return applyGradients(hm);
 }
 
 export function applyGradients(heatmap) {
@@ -25,6 +30,7 @@ export function applyGradients(heatmap) {
     })
     // gradientmap.push(row);
   });
+  // eslint-disable-next-line no-console
   console.log(gradientmap);
   return gradientmap;
 }
