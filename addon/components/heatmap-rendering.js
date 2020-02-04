@@ -1,13 +1,12 @@
-import layout from '../templates/components/heatmap-rendering'
+import layout from '../templates/components/heatmap-rendering';
 // import HeatmapRenderingCore from './heatmap-rendering-core'
 // import Component from '@ember/component';
-import RenderingCore from "explorviz-frontend/components/visualization/rendering/rendering-core"
-import heatmapGen from "../utils/heatmap-generator"
+import RenderingCore from "explorviz-frontend/components/visualization/rendering/rendering-core";
+import heatmapGen from "../utils/heatmap-generator";
 import { inject as service } from '@ember/service';
 import { getOwner } from '@ember/application';
 
 import THREE from 'three';
-import $ from 'jquery';
 
 import applyCityLayout from
   'explorviz-frontend/utils/application-rendering/city-layouter';
@@ -268,7 +267,15 @@ export default RenderingCore.extend({
 
     const self = this;
 
-    const foundation = this.get('foundationBuilder').createFoundation(emberApplication, this.get('store'));
+    // If foundation is already set don't add a new one. The foundationObj is set to null by cleanup.
+    let foundation;
+    if(!this.get('foundationBuilder.foundationObj')){
+      foundation = this.get('foundationBuilder').createFoundation(emberApplication, this.get('store'));
+      // TODO: remove console.log()
+      // console.log('Not generating new foundation: foundationObj already set.');
+    } else {
+      foundation = this.get('foundationBuilder.foundationObj');
+    }
 
     emberApplication.applyDefaultOpenLayout(self.get('initialSetupDone'));
 
@@ -325,7 +332,6 @@ export default RenderingCore.extend({
         const curveSegments = 40;
         const curveHeight = this.get('currentUser').getPreferenceOrDefaultValue('rangesetting', 'appVizCurvyCommHeight');
 
-        // TODO: Set the following properties according to user settings
         const isCurvedCommunication = curveHeight > 0.0;
 
         if (isCurvedCommunication && drawableClazzComm.get('sourceClazz') !== drawableClazzComm.get('targetClazz')) {
@@ -349,7 +355,6 @@ export default RenderingCore.extend({
           // Check for recursion
           if (drawableClazzComm.get('sourceClazz.fullQualifiedName') ==
             drawableClazzComm.get('targetClazz.fullQualifiedName')) {
-            // TODO: draw a circular arrow or something alike
           } else {
             // Add arrow from in direction of source to target clazz
             let arrowThickness = this.get('currentUser').getPreferenceOrDefaultValue('rangesetting', 'appVizCommArrowSize') * 4 * thickness;
@@ -441,8 +446,9 @@ export default RenderingCore.extend({
     component.set('color', color);
 
     if (color === foundationColor) {
-      console.log(component)
-      console.log(component.get('children'))
+      // TODO: remove console.log()
+      // console.log(component)
+      // console.log(component.get('children'))
     }
 
     const clazzes = component.get('clazzes');
@@ -489,7 +495,8 @@ export default RenderingCore.extend({
     let transparent = false;
     let opacityValue = 1.0;
 
-    if (boxEntity.get('state') === "TRANSPARENT") {
+    // if (boxEntity.get('state') === "TRANSPARENT") {
+    if (!boxEntity.get('foundation')) {
       transparent = this.get('currentUser').getPreferenceOrDefaultValue('flagsetting', 'appVizTransparency');
       opacityValue = this.get('currentUser').getPreferenceOrDefaultValue('rangesetting', 'appVizTransparencyIntensity');
     }
@@ -499,16 +506,44 @@ export default RenderingCore.extend({
       transparent: transparent
     });
 
-    material.color = new THREE.Color(color);
+    // Enable face colors for the foundation to set color of individual segments
+    if (boxEntity.get('foundation')) {
+      material.vertexColors = THREE.FaceColors;
+    }
 
+    material.color = new THREE.Color(color);
+      
     centerPoint.sub(this.get('centerAndZoomCalculator.centerPoint'));
     centerPoint.multiplyScalar(0.5);
 
     const extension = new THREE.Vector3(boxEntity.get('width') / 2.0,
       boxEntity.get('height') / 2.0, boxEntity.get('depth') / 2.0);
 
-    const cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z);
+    // Create new geometry with segments if the entity is foundation.
+    let cube;
+    if (boxEntity.get('foundation')) {
+      cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z, extension.x, 1, extension.z);
+    } else {
+      cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z);
+    }
     const mesh = new THREE.Mesh(cube, material);
+    
+    if (boxEntity.get('foundation')) {
+      // Compute heatmapValues
+      // TODO: add real values and put them at correct position
+      let gradientmap = heatmapGen.generateHeatmap(extension.x, extension.z);
+      
+      // Compute face numbers of top side of the cube 
+      let offset = Math.floor(extension.z)*4;
+      let size = Math.floor(extension.x) * Math.floor(extension.z) * 2;
+
+      for (let i = 0; i<size; i+=2) {
+        mesh.geometry.faces[i+offset].color.set(gradientmap[i/2])
+        mesh.geometry.faces[i+offset+1].color.set(gradientmap[i/2])
+      }
+      mesh.geometry.colorsNeedUpdate = true;
+      console.log(mesh)
+    }
 
     mesh.position.set(centerPoint.x, centerPoint.y, centerPoint.z);
     mesh.updateMatrix();

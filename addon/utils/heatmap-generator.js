@@ -15,8 +15,7 @@ export function generateHeatmap(height, width, heatmap) {
       hm.push(row);
     }
   }
-  // eslint-disable-next-line no-console
-  console.log(hm);
+  // console.log(hm);
   return applyGradients(hm);
 }
 
@@ -30,8 +29,7 @@ export function applyGradients(heatmap) {
     })
     // gradientmap.push(row);
   });
-  // eslint-disable-next-line no-console
-  console.log(gradientmap);
+  // console.log(gradientmap);
   return gradientmap;
 }
 
@@ -46,7 +44,7 @@ function computeGradient(int) {
   } else if (int <= -5) { //-16 - -5
     val = "cyan"
   } else if (int <= 5) { //-5 - 5
-    val = "mediumspringgreen"
+    val = "rgb(199, 199, 199)"
   }else if (int <= 15) {
     val = "lime"
   } else if (int <= 25) {
