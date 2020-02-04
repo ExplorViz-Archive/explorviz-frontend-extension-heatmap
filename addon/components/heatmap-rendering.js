@@ -45,6 +45,7 @@ export default RenderingCore.extend({
   listeners: null,
 
   oldRotation: null,
+  initialSetupDone: false,
   centerAndZoomCalculator: null,
   
   labeler: null,
@@ -53,16 +54,15 @@ export default RenderingCore.extend({
   interaction: null,
   interactionHandler: null,
   
+  // there's already a property 'listener' in superclass RenderingCore
+  listeners2: null,
+
   // @Override
   /**
    * 
    */
   didRender(){
     this._super(...arguments);
-    // eslint-disable-next-line no-console
-    // console.log($('#threeCanvas')[0]);
-    // eslint-disable-next-line no-console
-    // console.log(layout);
       this.initRendering();
       this.initListener();
   },
@@ -271,8 +271,6 @@ export default RenderingCore.extend({
     let foundation;
     if(!this.get('foundationBuilder.foundationObj')){
       foundation = this.get('foundationBuilder').createFoundation(emberApplication, this.get('store'));
-      // TODO: remove console.log()
-      // console.log('Not generating new foundation: foundationObj already set.');
     } else {
       foundation = this.get('foundationBuilder.foundationObj');
     }
@@ -355,6 +353,7 @@ export default RenderingCore.extend({
           // Check for recursion
           if (drawableClazzComm.get('sourceClazz.fullQualifiedName') ==
             drawableClazzComm.get('targetClazz.fullQualifiedName')) {
+              // todo: draw a circular arrow or something alike
           } else {
             // Add arrow from in direction of source to target clazz
             let arrowThickness = this.get('currentUser').getPreferenceOrDefaultValue('rangesetting', 'appVizCommArrowSize') * 4 * thickness;
@@ -445,16 +444,12 @@ export default RenderingCore.extend({
 
     component.set('color', color);
 
-    if (color === foundationColor) {
-      // TODO: remove console.log()
-      // console.log(component)
-      // console.log(component.get('children'))
-    }
-
     const clazzes = component.get('clazzes');
     const children = component.get('children');
 
     clazzes.forEach((clazz) => {
+      // TODO: remove
+      // console.log(clazz.fullQualifiedName)
       if (component.get('opened')) {
         if (clazz.get('highlighted')) {
           this.createBox(clazz, highlightedEntityColor, true);
@@ -495,10 +490,10 @@ export default RenderingCore.extend({
     let transparent = false;
     let opacityValue = 1.0;
 
-    // if (boxEntity.get('state') === "TRANSPARENT") {
-    if (!boxEntity.get('foundation')) {
-      transparent = this.get('currentUser').getPreferenceOrDefaultValue('flagsetting', 'appVizTransparency');
-      opacityValue = this.get('currentUser').getPreferenceOrDefaultValue('rangesetting', 'appVizTransparencyIntensity');
+    // Override transparency for heatmap mode
+    if (!boxEntity.get('foundation') && !isClazz) {
+      transparent = true;
+      opacityValue = 0.35
     }
 
     const material = new THREE.MeshLambertMaterial({
@@ -521,8 +516,13 @@ export default RenderingCore.extend({
 
     // Create new geometry with segments if the entity is foundation.
     let cube;
+    let segmentScaling = 0.25
+    let widthSegments = Math.floor(extension.x*segmentScaling)
+    let depthSegments = Math.floor(extension.z*segmentScaling)
     if (boxEntity.get('foundation')) {
-      cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z, extension.x, 1, extension.z);
+
+      cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z, widthSegments, 1, depthSegments);
+      // console.log(cube)
     } else {
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z);
     }
@@ -534,15 +534,17 @@ export default RenderingCore.extend({
       let gradientmap = heatmapGen.generateHeatmap(extension.x, extension.z);
       
       // Compute face numbers of top side of the cube 
-      let offset = Math.floor(extension.z)*4;
-      let size = Math.floor(extension.x) * Math.floor(extension.z) * 2;
+      let depthoffset = depthSegments*4;
+      let size = widthSegments * depthSegments * 2;
 
       for (let i = 0; i<size; i+=2) {
-        mesh.geometry.faces[i+offset].color.set(gradientmap[i/2])
-        mesh.geometry.faces[i+offset+1].color.set(gradientmap[i/2])
+        if (i%(widthSegments*2) !== 0) {
+          mesh.geometry.faces[i+depthoffset].color.set(gradientmap[i/2])
+          mesh.geometry.faces[i+depthoffset+1].color.set(gradientmap[i/2])
+        } 
       }
       mesh.geometry.colorsNeedUpdate = true;
-      console.log(mesh)
+      // console.log(mesh)
     }
 
     mesh.position.set(centerPoint.x, centerPoint.y, centerPoint.z);
@@ -550,10 +552,12 @@ export default RenderingCore.extend({
 
     mesh.userData.model = boxEntity;
     mesh.userData.name = boxEntity.get('name');
+    mesh.userData.fullQualifiedName = boxEntity.get('fullQualifiedName');
     mesh.userData.foundation = boxEntity.get('foundation');
     mesh.userData.type = isClazz ? 'clazz' : 'package';
     mesh.userData.opened = boxEntity.get('opened');
 
+    transparent = false;
     this.get('labeler').createLabel(mesh, this.get('application3D'),
       this.get('font'), transparent);
 
