@@ -3,6 +3,7 @@ import layout from '../templates/components/heatmap-rendering';
 // import Component from '@ember/component';
 import RenderingCore from "explorviz-frontend/components/visualization/rendering/rendering-core";
 import heatmapGen from "../utils/heatmap-generator";
+import clazzHelper from "../utils/clazz-helper";
 import { inject as service } from '@ember/service';
 import { getOwner } from '@ember/application';
 
@@ -33,6 +34,7 @@ export default RenderingCore.extend({
 
   applicationID: null,
   application3D: null,
+  foundationMesh: null,
 
   scene: null,
   webglrenderer: null,
@@ -386,6 +388,12 @@ export default RenderingCore.extend({
       self.set('initialSetupDone', true);
     }
 
+    // Get all (nested) clazzes of the application
+    let clazzList = [];
+    clazzHelper.getClazzList(foundation, clazzList);
+    // Set foundationMesh for further adaption
+    this.set('foundationMesh', self.get('application3D.children')[1]);
+    this.applyHeatmap(clazzList);
   },
 
   // Helper functions
@@ -448,8 +456,6 @@ export default RenderingCore.extend({
     const children = component.get('children');
 
     clazzes.forEach((clazz) => {
-      // TODO: remove
-      // console.log(clazz.fullQualifiedName)
       if (component.get('opened')) {
         if (clazz.get('highlighted')) {
           this.createBox(clazz, highlightedEntityColor, true);
@@ -491,9 +497,10 @@ export default RenderingCore.extend({
     let opacityValue = 1.0;
 
     // Override transparency for heatmap mode
+    // TODO: bind to heatmap button
     if (!boxEntity.get('foundation') && !isClazz) {
       transparent = true;
-      opacityValue = 0.35
+      opacityValue = 0.15;
     }
 
     const material = new THREE.MeshLambertMaterial({
@@ -516,53 +523,40 @@ export default RenderingCore.extend({
 
     // Create new geometry with segments if the entity is foundation.
     let cube;
-    let segmentScaling = 0.25
-    let widthSegments = Math.floor(extension.x*segmentScaling)
-    let depthSegments = Math.floor(extension.z*segmentScaling)
+    let segmentScalar = 0.25
+    let widthSegments = Math.floor(extension.x * segmentScalar)
+    let depthSegments = Math.floor(extension.z * segmentScalar)
     if (boxEntity.get('foundation')) {
-
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z, widthSegments, 1, depthSegments);
-      // console.log(cube)
     } else {
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z);
     }
-    const mesh = new THREE.Mesh(cube, material);
-    
-    if (boxEntity.get('foundation')) {
-      // Compute heatmapValues
-      // TODO: add real values and put them at correct position
-      let gradientmap = heatmapGen.generateHeatmap(extension.x, extension.z);
-      
-      // Compute face numbers of top side of the cube 
-      let depthoffset = depthSegments*4;
-      let size = widthSegments * depthSegments * 2;
 
-      for (let i = 0; i<size; i+=2) {
-        if (i%(widthSegments*2) !== 0) {
-          mesh.geometry.faces[i+depthoffset].color.set(gradientmap[i/2])
-          mesh.geometry.faces[i+depthoffset+1].color.set(gradientmap[i/2])
-        } 
-      }
-      mesh.geometry.colorsNeedUpdate = true;
-      // console.log(mesh)
-    }
+    const mesh = new THREE.Mesh(cube, material);
+
+    // Set (optional) name of the mesh to the fqn of the component 
+    mesh.name = boxEntity.get('fullQualifiedName')
 
     mesh.position.set(centerPoint.x, centerPoint.y, centerPoint.z);
     mesh.updateMatrix();
 
     mesh.userData.model = boxEntity;
     mesh.userData.name = boxEntity.get('name');
-    mesh.userData.fullQualifiedName = boxEntity.get('fullQualifiedName');
     mesh.userData.foundation = boxEntity.get('foundation');
     mesh.userData.type = isClazz ? 'clazz' : 'package';
     mesh.userData.opened = boxEntity.get('opened');
+
+    // Save size of the foundation as user data
+    if (boxEntity.get('foundation')) {
+      mesh.userData.widthSegments = widthSegments;
+      mesh.userData.depthSegments = depthSegments;
+    }
 
     transparent = false;
     this.get('labeler').createLabel(mesh, this.get('application3D'),
       this.get('font'), transparent);
 
     this.get('application3D').add(mesh);
-
   },// END createBox
 
   /**
@@ -630,4 +624,98 @@ export default RenderingCore.extend({
       this.get(service).on(event, listenerFunction);
     });
   }, // END initInteraction
+
+  applyHeatmap(clazzList){
+
+    // console.log(this.get("application3D.children")[1])
+    // console.log(this.get('application3D').children)
+    // let faceIndices = [];
+    // let downVector = new THREE.Vector3(0, -1, 0)
+    
+    // let camera = this.get('camera');
+    // var helper = new THREE.CameraHelper(camera);
+    // this.get('application3D').add(helper)
+    
+    let raycaster = new THREE.Raycaster();
+
+    clazzList.forEach(clazz => { 
+    // let clazz = clazzList[0];
+      let clazzMesh = this.get('application3D').getObjectByName(clazz.fullQualifiedName);
+      if (clazzMesh){
+        // TODO: scale pos with application size
+        let viewPos = this.get("foundationMesh.position").clone();
+        viewPos.y = Math.max(this.get('camera').position.z * 0.9, 75);
+        viewPos.z += this.get("foundationMesh.geometry.parameters.depth") * 0.3;
+        viewPos.x -= this.get("foundationMesh.geometry.parameters.width") * 0.3;
+        let clazzPos = clazzMesh.position;
+        let rayVector = clazzPos.clone().sub(viewPos); 
+
+
+        let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+        let points = [];
+        points.push(viewPos)
+        points.push(clazzPos)
+        points.push(clazzPos.clone().add(rayVector))
+        let geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+        let line = new THREE.Line(geometry, material);
+        this.get('application3D').add(line);
+
+        // console.log(cameraPos)
+        // console.log(rayVector)
+        // console.log(clazzPos)
+        // let raycaster = new THREE.Raycaster(clazzPos, downVector);
+        
+        raycaster.set(clazzPos, rayVector.normalize());
+        let intersects = raycaster.intersectObject(this.get("foundationMesh"));
+
+        // console.log(clazzMesh.name)
+        // console.log(intersects)
+        
+        intersects.forEach(val => {
+          // faceIndices.push(val.faceIndex);
+          this.setFaces(val.faceIndex, ["red", "orange", "yellow"]);
+        })
+      }
+    });
+    console.log("####################################################################")
+
+    // faceIndices.forEach(index => {
+    //   this.setFaces(index, ["red", "orange", "yellow"])
+    // });
+
+    this.get('foundationMesh').geometry.colorsNeedUpdate = true;
+  },
+
+  // TODO: add real values 
+  setFaces(index, colors) {
+    let depthSegments = this.get("foundationMesh.userData.depthSegments");
+    let widthSegments = this.get('foundationMesh.userData.widthSegments');
+
+    this.get('foundationMesh').geometry.faces[index].color.set(colors[0]);
+    if (index % 2 === 0){
+      this.get('foundationMesh').geometry.faces[index+1].color.set(colors[0])
+    } else {
+      this.get('foundationMesh').geometry.faces[index-1].color.set(colors[0])
+    }
+
+    // TODO: Color surrounding tiles 
+
+
+
+    // Compute heatmapValues
+    let gradientmap = heatmapGen.generateHeatmap(depthSegments, widthSegments);
+    
+    // Compute face numbers of top side of the cube 
+    let depthoffset = depthSegments * 4;
+    let size = widthSegments * depthSegments * 2;
+
+    // Set dummy coloring of foundation mesh
+    // for (let i = 0; i < size; i += 2) {
+    //   if (i % (widthSegments * 2) !== 0) {
+    //     this.get('foundationMesh').geometry.faces[i+depthoffset].color.set(gradientmap[i/2])
+    //     this.get('foundationMesh').geometry.faces[i+depthoffset+1].color.set(gradientmap[i/2])
+    //   } 
+    // }
+  }
 });
