@@ -33,7 +33,7 @@ export function applyGradients(heatmap) {
   return gradientmap;
 }
 
-function computeGradient(int) {
+export function computeGradient(int) {
   let val = "crimson";
   /*if (int <= -45) { //-50 - -45
     val = "black"

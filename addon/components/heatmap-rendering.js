@@ -1,6 +1,7 @@
 import layout from '../templates/components/heatmap-rendering';
 // import HeatmapRenderingCore from './heatmap-rendering-core'
 // import Component from '@ember/component';
+
 import RenderingCore from "explorviz-frontend/components/visualization/rendering/rendering-core";
 import heatmapGen from "../utils/heatmap-generator";
 import clazzHelper from "../utils/clazz-helper";
@@ -392,7 +393,7 @@ export default RenderingCore.extend({
     let clazzList = [];
     clazzHelper.getClazzList(foundation, clazzList);
     // Set foundationMesh for further adaption
-    this.set('foundationMesh', self.get('application3D.children')[1]);
+    this.set('foundationMesh', self.get('application3D').getObjectByName(foundation.fullQualifiedName));
     this.applyHeatmap(clazzList);
   },
 
@@ -627,88 +628,108 @@ export default RenderingCore.extend({
 
   applyHeatmap(clazzList){
 
-    // console.log(this.get("application3D.children")[1])
-    // console.log(this.get('application3D').children)
-    // let faceIndices = [];
-    // let downVector = new THREE.Vector3(0, -1, 0)
-    
     // let camera = this.get('camera');
     // var helper = new THREE.CameraHelper(camera);
     // this.get('application3D').add(helper)
     
+    // Create viewpoint from which the faces of the foundation are computed for each clazz. 
+    let viewPos = this.get("foundationMesh.position").clone();
+    viewPos.y = Math.max(this.get('camera').position.z * 0.8, 75);
+    // viewPos.z += this.get("foundationMesh.geometry.parameters.depth") * 0.1;
+    viewPos.x -= this.get("foundationMesh.geometry.parameters.width") * 0.25;
     let raycaster = new THREE.Raycaster();
 
     clazzList.forEach(clazz => { 
     // let clazz = clazzList[0];
-      let clazzMesh = this.get('application3D').getObjectByName(clazz.fullQualifiedName);
-      if (clazzMesh){
-        // TODO: scale pos with application size
-        let viewPos = this.get("foundationMesh.position").clone();
-        viewPos.y = Math.max(this.get('camera').position.z * 0.9, 75);
-        viewPos.z += this.get("foundationMesh.geometry.parameters.depth") * 0.3;
-        viewPos.x -= this.get("foundationMesh.geometry.parameters.width") * 0.3;
-        let clazzPos = clazzMesh.position;
-        let rayVector = clazzPos.clone().sub(viewPos); 
 
+      // Calculate center point of the clazz floor. This is used for computing the corresponding
+      // face on the foundation box.
+      let clazzPos = new THREE.Vector3(clazz.get('positionX') +
+      clazz.get('width') / 2.0, clazz.get('positionY'),
+      clazz.get('positionZ') + clazz.get('depth') / 2.0);
+      clazzPos.sub(this.get('centerAndZoomCalculator.centerPoint'));
+      clazzPos.multiplyScalar(0.5);
 
-        let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-        let points = [];
-        points.push(viewPos)
-        points.push(clazzPos)
-        points.push(clazzPos.clone().add(rayVector))
-        let geometry = new THREE.BufferGeometry().setFromPoints(points);
+      // The vector from the viewPos to the clazz floor center point 
+      let rayVector = clazzPos.clone().sub(viewPos); 
 
-        let line = new THREE.Line(geometry, material);
-        this.get('application3D').add(line);
+      // TODO: (dev) helper lines from viewpos to floor center point to retrace face computation
+      let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+      let points = [];
+      points.push(viewPos)
+      points.push(clazzPos)
+      points.push(clazzPos.clone().add(rayVector.multiplyScalar(0.25)))
+      let geometry = new THREE.BufferGeometry().setFromPoints(points);
+      let line = new THREE.Line(geometry, material);
+      this.get('application3D').add(line);
 
-        // console.log(cameraPos)
-        // console.log(rayVector)
-        // console.log(clazzPos)
-        // let raycaster = new THREE.Raycaster(clazzPos, downVector);
-        
-        raycaster.set(clazzPos, rayVector.normalize());
-        let intersects = raycaster.intersectObject(this.get("foundationMesh"));
+      // Following the ray vector from the floor center get the intersection with the foundation. 
+      raycaster.set(clazzPos, rayVector.normalize());
+      let intersects = raycaster.intersectObject(this.get("foundationMesh"));
 
-        // console.log(clazzMesh.name)
-        // console.log(intersects)
-        
-        intersects.forEach(val => {
-          // faceIndices.push(val.faceIndex);
-          this.setFaces(val.faceIndex, ["red", "orange", "yellow"]);
-        })
-      }
+      // TODO: get real values and different metrics
+      let clazzHeatmapColors = ["red", "yellow"]; 
+
+      // Color each intersection point.
+      intersects.forEach(val => {
+        this.colorFoundationSegment(val.faceIndex, clazzHeatmapColors);
+      })
     });
+    // eslint-disable-next-line no-console
     console.log("####################################################################")
 
-    // faceIndices.forEach(index => {
-    //   this.setFaces(index, ["red", "orange", "yellow"])
-    // });
-
     this.get('foundationMesh').geometry.colorsNeedUpdate = true;
-  },
+  }, // END applyHeatmap
 
-  // TODO: add real values 
-  setFaces(index, colors) {
+  colorFoundationSegment(index, colors) {
     let depthSegments = this.get("foundationMesh.userData.depthSegments");
     let widthSegments = this.get('foundationMesh.userData.widthSegments');
+    
+    // The number of faces at front and back of the foundation mesh, i.e. the starting index for the faces on top.
+    let depthOffset = depthSegments * 4;
+    // Compute face numbers of top side of the cube 
+    let size = widthSegments * depthSegments * 2;
 
+    let evenIndex;
+    // Set primary color at intersection point
     this.get('foundationMesh').geometry.faces[index].color.set(colors[0]);
     if (index % 2 === 0){
-      this.get('foundationMesh').geometry.faces[index+1].color.set(colors[0])
+      this.get('foundationMesh').geometry.faces[index+1].color.set(colors[0]);
+      evenIndex = index;
     } else {
-      this.get('foundationMesh').geometry.faces[index-1].color.set(colors[0])
+      evenIndex = index - 1;
+      this.get('foundationMesh').geometry.faces[index-1].color.set(colors[0]);
+    }
+    
+    let noColor = new THREE.Color();
+
+    // TODO: Color surrounding tiles with secondary color if not already set 
+    let aboveIndex = evenIndex + 2; 
+    if (aboveIndex < size + depthOffset && this.get('foundationMesh').geometry.faces[aboveIndex].color.equals(noColor)) {
+      this.get('foundationMesh').geometry.faces[aboveIndex].color.set(colors[1]);
+      this.get('foundationMesh').geometry.faces[aboveIndex + 1].color.set(colors[1]);
     }
 
-    // TODO: Color surrounding tiles 
+    let belowIndex = evenIndex - 2; 
+    if (belowIndex < size + depthOffset && this.get('foundationMesh').geometry.faces[belowIndex].color.equals(noColor)) {
+      this.get('foundationMesh').geometry.faces[belowIndex].color.set(colors[1]);
+      this.get('foundationMesh').geometry.faces[belowIndex + 1].color.set(colors[1]);
+    }
 
+    let leftIndex = evenIndex - depthSegments*2 - 2; 
+    if (leftIndex < size + depthOffset && this.get('foundationMesh').geometry.faces[leftIndex].color.equals(noColor)) {
+      this.get('foundationMesh').geometry.faces[leftIndex].color.set(colors[1]);
+      this.get('foundationMesh').geometry.faces[leftIndex + 1].color.set(colors[1]);
+    }
 
+    let rightIndex = evenIndex + depthSegments*2 + 2; 
+    if (rightIndex < size + depthOffset && this.get('foundationMesh').geometry.faces[rightIndex].color.equals(noColor)) {
+      this.get('foundationMesh').geometry.faces[rightIndex].color.set(colors[1]);
+      this.get('foundationMesh').geometry.faces[rightIndex + 1].color.set(colors[1]);
+    }
 
     // Compute heatmapValues
     let gradientmap = heatmapGen.generateHeatmap(depthSegments, widthSegments);
-    
-    // Compute face numbers of top side of the cube 
-    let depthoffset = depthSegments * 4;
-    let size = widthSegments * depthSegments * 2;
 
     // Set dummy coloring of foundation mesh
     // for (let i = 0; i < size; i += 2) {
@@ -717,5 +738,20 @@ export default RenderingCore.extend({
     //     this.get('foundationMesh').geometry.faces[i+depthoffset+1].color.set(gradientmap[i/2])
     //   } 
     // }
-  }
+  },
+
+  // Reset the color of all faces of the foundation mesh to the base foundation color
+  resetFoundationColor() {
+    let depthSegments = this.get("foundationMesh.userData.depthSegments");
+    let widthSegments = this.get('foundationMesh.userData.widthSegments');
+    let depthoffset = depthSegments * 4;
+    let size = widthSegments * depthSegments * 2;
+    let foundationColor = this.get('configuration.applicationColors.foundation');
+
+    for (let i = 0; i < size; i += 2) {
+      this.get('foundationMesh').geometry.faces[i+depthoffset].color.set(foundationColor)
+      this.get('foundationMesh').geometry.faces[i+depthoffset+1].color.set(foundationColor)
+    }
+    this.get('foundationMesh').geometry.colorsNeedUpdate = true;
+  },
 });
