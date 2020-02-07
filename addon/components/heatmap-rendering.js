@@ -524,7 +524,7 @@ export default RenderingCore.extend({
 
     // Create new geometry with segments if the entity is foundation.
     let cube;
-    let segmentScalar = 0.25
+    let segmentScalar = 0.33
     let widthSegments = Math.floor(extension.x * segmentScalar)
     let depthSegments = Math.floor(extension.z * segmentScalar)
     if (boxEntity.get('foundation')) {
@@ -639,6 +639,18 @@ export default RenderingCore.extend({
     viewPos.x -= this.get("foundationMesh.geometry.parameters.width") * 0.25;
     let raycaster = new THREE.Raycaster();
 
+
+    let depthSegments = this.get("foundationMesh.userData.depthSegments");
+    let widthSegments = this.get('foundationMesh.userData.widthSegments');
+    // The number of faces at front and back of the foundation mesh, i.e. the starting index for the faces on top.
+    let depthOffset = depthSegments * 4;
+    // Compute face numbers of top side of the cube 
+    let size = widthSegments * depthSegments * 2;
+    // Prepare color map with same size as the surface of the foundation topside
+    let colorMap = new Array(size).fill(0);
+
+    const heatmap = heatmapGen.computeHeatmap(clazzList);
+
     clazzList.forEach(clazz => { 
     // let clazz = clazzList[0];
 
@@ -668,20 +680,18 @@ export default RenderingCore.extend({
       let intersects = raycaster.intersectObject(this.get("foundationMesh"));
 
       // TODO: get real values and different metrics
-      let clazzHeatmapColors = ["red", "yellow"]; 
-
-      // Color each intersection point.
-      intersects.forEach(val => {
-        this.colorFoundationSegment(val.faceIndex, clazzHeatmapColors);
-      })
+      // Compute color only for the first intersection point for consistency if one was found.
+      if (intersects[0]){
+        this.setColorValues(intersects[0].faceIndex - depthOffset, heatmap.get(clazz.fullQualifiedName), colorMap);
+      }
     });
+    
+    this.invokeRecoloring(colorMap);
     // eslint-disable-next-line no-console
-    console.log("####################################################################")
-
-    this.get('foundationMesh').geometry.colorsNeedUpdate = true;
+    // console.log("####################################################################")
   }, // END applyHeatmap
 
-  colorFoundationSegment(index, colors) {
+  setColorValues(index, heatValue, colorMap) {
     let depthSegments = this.get("foundationMesh.userData.depthSegments");
     let widthSegments = this.get('foundationMesh.userData.widthSegments');
     
@@ -691,67 +701,105 @@ export default RenderingCore.extend({
     let size = widthSegments * depthSegments * 2;
 
     let evenIndex;
-    // Set primary color at intersection point
-    this.get('foundationMesh').geometry.faces[index].color.set(colors[0]);
+    let secondaryScalar = 0.33;
+    let tertiaryScalar = 0.11;
+
     if (index % 2 === 0){
-      this.get('foundationMesh').geometry.faces[index+1].color.set(colors[0]);
       evenIndex = index;
     } else {
       evenIndex = index - 1;
-      this.get('foundationMesh').geometry.faces[index-1].color.set(colors[0]);
     }
-    
-    let noColor = new THREE.Color();
+    colorMap[evenIndex]     += heatValue;
+    colorMap[evenIndex + 1] += heatValue;
 
-    // TODO: Color surrounding tiles with secondary color if not already set 
-    let aboveIndex = evenIndex + 2; 
-    if (aboveIndex < size + depthOffset && this.get('foundationMesh').geometry.faces[aboveIndex].color.equals(noColor)) {
-      this.get('foundationMesh').geometry.faces[aboveIndex].color.set(colors[1]);
-      this.get('foundationMesh').geometry.faces[aboveIndex + 1].color.set(colors[1]);
-    }
+    // TODO: compute bounds
 
-    let belowIndex = evenIndex - 2; 
-    if (belowIndex < size + depthOffset && this.get('foundationMesh').geometry.faces[belowIndex].color.equals(noColor)) {
-      this.get('foundationMesh').geometry.faces[belowIndex].color.set(colors[1]);
-      this.get('foundationMesh').geometry.faces[belowIndex + 1].color.set(colors[1]);
+    // secondary colors
+    let nIndex = evenIndex + 2; 
+    if (nIndex < size) {
+      colorMap[nIndex] += heatValue * secondaryScalar;
+      colorMap[nIndex + 1] += heatValue * secondaryScalar;
     }
 
-    let leftIndex = evenIndex - depthSegments*2 - 2; 
-    if (leftIndex < size + depthOffset && this.get('foundationMesh').geometry.faces[leftIndex].color.equals(noColor)) {
-      this.get('foundationMesh').geometry.faces[leftIndex].color.set(colors[1]);
-      this.get('foundationMesh').geometry.faces[leftIndex + 1].color.set(colors[1]);
+    let sIndex = evenIndex - 2; 
+    if (sIndex < size) {
+      colorMap[sIndex] += heatValue * secondaryScalar;
+      colorMap[sIndex + 1] += heatValue * secondaryScalar;
     }
 
-    let rightIndex = evenIndex + depthSegments*2 + 2; 
-    if (rightIndex < size + depthOffset && this.get('foundationMesh').geometry.faces[rightIndex].color.equals(noColor)) {
-      this.get('foundationMesh').geometry.faces[rightIndex].color.set(colors[1]);
-      this.get('foundationMesh').geometry.faces[rightIndex + 1].color.set(colors[1]);
+    let wIndex = evenIndex - widthSegments*2; 
+    if (wIndex < size ) {
+      colorMap[wIndex] += heatValue * secondaryScalar;
+      colorMap[wIndex + 1] += heatValue * secondaryScalar;
     }
 
-    // Compute heatmapValues
-    let gradientmap = heatmapGen.generateHeatmap(depthSegments, widthSegments);
+    let eIndex = evenIndex + widthSegments*2; 
+    if (eIndex < size) {
+      colorMap[eIndex] += heatValue * secondaryScalar;
+      colorMap[eIndex + 1] += heatValue * secondaryScalar;
+    }
 
-    // Set dummy coloring of foundation mesh
-    // for (let i = 0; i < size; i += 2) {
-    //   if (i % (widthSegments * 2) !== 0) {
-    //     this.get('foundationMesh').geometry.faces[i+depthoffset].color.set(gradientmap[i/2])
-    //     this.get('foundationMesh').geometry.faces[i+depthoffset+1].color.set(gradientmap[i/2])
-    //   } 
-    // }
+    // tertiary colors
+    let neIndex = eIndex + 2; 
+    if (neIndex < size) {
+      colorMap[neIndex] += heatValue * tertiaryScalar;
+      colorMap[neIndex + 1] += heatValue * tertiaryScalar;
+    }
+
+    let seIndex = eIndex - 2; 
+    if (seIndex < size) {
+      colorMap[seIndex] += heatValue * tertiaryScalar;
+      colorMap[seIndex + 1] += heatValue * tertiaryScalar;
+    }
+
+    let swIndex = wIndex + 2; 
+    if (swIndex < size ) {
+      colorMap[swIndex] += heatValue * tertiaryScalar;
+      colorMap[swIndex + 1] += heatValue * tertiaryScalar;
+    }
+
+    let nwIndex = wIndex - 2; 
+    if (nwIndex < size) {
+      colorMap[nwIndex] += heatValue * tertiaryScalar;
+      colorMap[nwIndex + 1] += heatValue * tertiaryScalar;
+    }
   },
 
-  // Reset the color of all faces of the foundation mesh to the base foundation color
-  resetFoundationColor() {
+  /**
+   * Apply the values specified in the colorMap to the surface of the foundation Mesh
+   * 
+   * @param {Number[]} colorMap 
+   */
+  invokeRecoloring(colorMap){
     let depthSegments = this.get("foundationMesh.userData.depthSegments");
     let widthSegments = this.get('foundationMesh.userData.widthSegments');
-    let depthoffset = depthSegments * 4;
-    let size = widthSegments * depthSegments * 2;
-    let foundationColor = this.get('configuration.applicationColors.foundation');
 
-    for (let i = 0; i < size; i += 2) {
-      this.get('foundationMesh').geometry.faces[i+depthoffset].color.set(foundationColor)
-      this.get('foundationMesh').geometry.faces[i+depthoffset+1].color.set(foundationColor)
+    // The number of faces at front and back of the foundation mesh, i.e. the starting index for the faces on top.
+    let depthOffset = depthSegments * 4;
+    // Compute face numbers of top side of the cube 
+    let size = widthSegments * depthSegments * 2;
+    for(let i = 0; i < size; i+= 1){
+      if (colorMap[i]) {
+        let color = heatmapGen.computeGradient(colorMap[i]);
+        this.get('foundationMesh').geometry.faces[i + depthOffset].color.set(color);
+      }
     }
+    
     this.get('foundationMesh').geometry.colorsNeedUpdate = true;
   },
+
+  // // Reset the color of all faces of the foundation mesh to the base foundation color
+  // resetFoundationColor() {
+  //   let depthSegments = this.get("foundationMesh.userData.depthSegments");
+  //   let widthSegments = this.get('foundationMesh.userData.widthSegments');
+  //   let depthoffset = depthSegments * 4;
+  //   let size = widthSegments * depthSegments * 2;
+  //   let foundationColor = this.get('configuration.applicationColors.foundation');
+
+  //   for (let i = 0; i < size; i += 2) {
+  //     this.get('foundationMesh').geometry.faces[i+depthoffset].color.set(foundationColor)
+  //     this.get('foundationMesh').geometry.faces[i+depthoffset+1].color.set(foundationColor)
+  //   }
+  //   this.get('foundationMesh').geometry.colorsNeedUpdate = true;
+  // },
 });
