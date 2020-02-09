@@ -68,27 +68,27 @@ export function applyGradients(heatmap) {
 // }
 
 export function computeGradient(int) {
-  let val = "crimson";
-  /*if (int <= -45) { //-50 - -45
-    val = "black"
-  } else*/ if (int <= -35) { //-46 - -30
-    val = "blue"
-  } else if (int <= -15) { //-31 - -15
-    val = "cornflowerblue"
-  } else if (int <= -5) { //-16 - -5
-    val = "cyan"
-  } else if (int <= 5) { //-5 - 5
-    val = "rgb(0, 255, 174)"
-  }else if (int <= 15) {
-    val = "rgb(0, 255, 106)"
-  } else if (int <= 25) {
-    val = "rgb(174, 255, 0)"
-  } else if (int <= 35) {
-    val = "rgb(255, 145, 0)"
-  } else /*if (int <= 45)*/ {
-    val = "(255, 0, 0)"
-  } /*else {
-    val = "white"
-  }*/
+  let val = "";
+
+  if (int <= -35) { //-* - -35
+    val = "rgb(0, 98, 255)"
+  } else if (int <= -25) { //-34 - -25
+    val = "rgb(0, 255, 162)"
+  } else if (int <= -15) { //-26 - -15
+    val = "rgb(89, 255, 0)"
+  }else if (int <= -5) { //-14 - -5
+    val = "rgb(162, 255, 0)"
+  } else if (int <= 5) { //-6 - 5
+    val = "rgb(255, 255, 255)"
+  }else if (int <= 15) { //6 - 15
+    val = "rgb(255, 255, 0)"
+  } else if (int <= 25) { // 14 - 25
+    val = "rgb(255, 162, 0)"
+  } else if (int <= 35) { // 26 - 35
+    val = "rgb(255, 98, 0)"
+  } else {  // 36 - * 
+    val = "rgb(255, 0, 0)"
+  } 
+
   return val;
 }

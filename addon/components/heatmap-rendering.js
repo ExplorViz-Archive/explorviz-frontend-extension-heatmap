@@ -701,8 +701,8 @@ export default RenderingCore.extend({
     let size = widthSegments * depthSegments * 2;
 
     let evenIndex;
-    let secondaryScalar = 0.33;
-    let tertiaryScalar = 0.11;
+    let secondaryScalar = 0.5;
+    let tertiaryScalar = 0.25;
 
     if (index % 2 === 0){
       evenIndex = index;
