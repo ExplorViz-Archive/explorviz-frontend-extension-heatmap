@@ -3,6 +3,7 @@ import layout from '../templates/components/heatmap-rendering';
 // import Component from '@ember/component';
 
 import RenderingCore from "explorviz-frontend/components/visualization/rendering/rendering-core";
+import arrayHeatmap from "../utils/array-heatmap";
 import heatmapGen from "../utils/heatmap-generator";
 import clazzHelper from "../utils/clazz-helper";
 import { inject as service } from '@ember/service';
@@ -527,9 +528,12 @@ export default RenderingCore.extend({
     let segmentScalar = 0.33
     let widthSegments = Math.floor(extension.x * segmentScalar)
     let depthSegments = Math.floor(extension.z * segmentScalar)
+    // TODO: Add choice of optional array heatmap vs. simple heatmap
     if (boxEntity.get('foundation')) {
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z, widthSegments, 1, depthSegments);
-    } else {
+    } /* else if (simpleheat) {
+
+    } */ else {
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z);
     }
 
@@ -634,7 +638,7 @@ export default RenderingCore.extend({
     
     // Create viewpoint from which the faces of the foundation are computed for each clazz. 
     let viewPos = this.get("foundationMesh.position").clone();
-    viewPos.y = Math.max(this.get('camera').position.z * 0.8, 75);
+    viewPos.y = Math.max(this.get('camera').position.z * 0.8, 100);
     // viewPos.z += this.get("foundationMesh.geometry.parameters.depth") * 0.1;
     viewPos.x -= this.get("foundationMesh.geometry.parameters.width") * 0.25;
     let raycaster = new THREE.Raycaster();
@@ -649,6 +653,7 @@ export default RenderingCore.extend({
     // Prepare color map with same size as the surface of the foundation topside
     let colorMap = new Array(size).fill(0);
 
+    // TODO: remove random data values
     const heatmap = heatmapGen.computeHeatmap(clazzList);
 
     clazzList.forEach(clazz => { 
@@ -666,14 +671,14 @@ export default RenderingCore.extend({
       let rayVector = clazzPos.clone().sub(viewPos); 
 
       // TODO: (dev) helper lines from viewpos to floor center point to retrace face computation
-      let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-      let points = [];
-      points.push(viewPos)
-      points.push(clazzPos)
-      points.push(clazzPos.clone().add(rayVector.multiplyScalar(0.25)))
-      let geometry = new THREE.BufferGeometry().setFromPoints(points);
-      let line = new THREE.Line(geometry, material);
-      this.get('application3D').add(line);
+      // let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+      // let points = [];
+      // points.push(viewPos)
+      // points.push(clazzPos)
+      // points.push(clazzPos.clone().add(rayVector.multiplyScalar(0.25)))
+      // let geometry = new THREE.BufferGeometry().setFromPoints(points);
+      // let line = new THREE.Line(geometry, material);
+      // this.get('application3D').add(line);
 
       // Following the ray vector from the floor center get the intersection with the foundation. 
       raycaster.set(clazzPos, rayVector.normalize());
@@ -682,124 +687,15 @@ export default RenderingCore.extend({
       // TODO: get real values and different metrics
       // Compute color only for the first intersection point for consistency if one was found.
       if (intersects[0]){
-        this.setColorValues(intersects[0].faceIndex - depthOffset, heatmap.get(clazz.fullQualifiedName), colorMap);
+        arrayHeatmap.setColorValues(intersects[0].faceIndex - depthOffset, 
+                            heatmap.get(clazz.fullQualifiedName), 
+                            colorMap, 
+                            this.get('foundationMesh'));
       }
     });
     
-    this.invokeRecoloring(colorMap);
+    arrayHeatmap.invokeRecoloring(colorMap, this.get('foundationMesh'));
     // eslint-disable-next-line no-console
     // console.log("####################################################################")
   }, // END applyHeatmap
-
-  setColorValues(index, heatValue, colorMap) {
-    let depthSegments = this.get("foundationMesh.userData.depthSegments");
-    let widthSegments = this.get('foundationMesh.userData.widthSegments');
-    
-    // The number of faces at front and back of the foundation mesh, i.e. the starting index for the faces on top.
-    let depthOffset = depthSegments * 4;
-    // Compute face numbers of top side of the cube 
-    let size = widthSegments * depthSegments * 2;
-
-    let evenIndex;
-    let secondaryScalar = 0.5;
-    let tertiaryScalar = 0.25;
-
-    if (index % 2 === 0){
-      evenIndex = index;
-    } else {
-      evenIndex = index - 1;
-    }
-    colorMap[evenIndex]     += heatValue;
-    colorMap[evenIndex + 1] += heatValue;
-
-    // TODO: compute bounds
-
-    // secondary colors
-    let nIndex = evenIndex + 2; 
-    if (nIndex < size) {
-      colorMap[nIndex] += heatValue * secondaryScalar;
-      colorMap[nIndex + 1] += heatValue * secondaryScalar;
-    }
-
-    let sIndex = evenIndex - 2; 
-    if (sIndex < size) {
-      colorMap[sIndex] += heatValue * secondaryScalar;
-      colorMap[sIndex + 1] += heatValue * secondaryScalar;
-    }
-
-    let wIndex = evenIndex - widthSegments*2; 
-    if (wIndex < size ) {
-      colorMap[wIndex] += heatValue * secondaryScalar;
-      colorMap[wIndex + 1] += heatValue * secondaryScalar;
-    }
-
-    let eIndex = evenIndex + widthSegments*2; 
-    if (eIndex < size) {
-      colorMap[eIndex] += heatValue * secondaryScalar;
-      colorMap[eIndex + 1] += heatValue * secondaryScalar;
-    }
-
-    // tertiary colors
-    let neIndex = eIndex + 2; 
-    if (neIndex < size) {
-      colorMap[neIndex] += heatValue * tertiaryScalar;
-      colorMap[neIndex + 1] += heatValue * tertiaryScalar;
-    }
-
-    let seIndex = eIndex - 2; 
-    if (seIndex < size) {
-      colorMap[seIndex] += heatValue * tertiaryScalar;
-      colorMap[seIndex + 1] += heatValue * tertiaryScalar;
-    }
-
-    let swIndex = wIndex + 2; 
-    if (swIndex < size ) {
-      colorMap[swIndex] += heatValue * tertiaryScalar;
-      colorMap[swIndex + 1] += heatValue * tertiaryScalar;
-    }
-
-    let nwIndex = wIndex - 2; 
-    if (nwIndex < size) {
-      colorMap[nwIndex] += heatValue * tertiaryScalar;
-      colorMap[nwIndex + 1] += heatValue * tertiaryScalar;
-    }
-  },
-
-  /**
-   * Apply the values specified in the colorMap to the surface of the foundation Mesh
-   * 
-   * @param {Number[]} colorMap 
-   */
-  invokeRecoloring(colorMap){
-    let depthSegments = this.get("foundationMesh.userData.depthSegments");
-    let widthSegments = this.get('foundationMesh.userData.widthSegments');
-
-    // The number of faces at front and back of the foundation mesh, i.e. the starting index for the faces on top.
-    let depthOffset = depthSegments * 4;
-    // Compute face numbers of top side of the cube 
-    let size = widthSegments * depthSegments * 2;
-    for(let i = 0; i < size; i+= 1){
-      if (colorMap[i]) {
-        let color = heatmapGen.computeGradient(colorMap[i]);
-        this.get('foundationMesh').geometry.faces[i + depthOffset].color.set(color);
-      }
-    }
-    
-    this.get('foundationMesh').geometry.colorsNeedUpdate = true;
-  },
-
-  // // Reset the color of all faces of the foundation mesh to the base foundation color
-  // resetFoundationColor() {
-  //   let depthSegments = this.get("foundationMesh.userData.depthSegments");
-  //   let widthSegments = this.get('foundationMesh.userData.widthSegments');
-  //   let depthoffset = depthSegments * 4;
-  //   let size = widthSegments * depthSegments * 2;
-  //   let foundationColor = this.get('configuration.applicationColors.foundation');
-
-  //   for (let i = 0; i < size; i += 2) {
-  //     this.get('foundationMesh').geometry.faces[i+depthoffset].color.set(foundationColor)
-  //     this.get('foundationMesh').geometry.faces[i+depthoffset+1].color.set(foundationColor)
-  //   }
-  //   this.get('foundationMesh').geometry.colorsNeedUpdate = true;
-  // },
 });
