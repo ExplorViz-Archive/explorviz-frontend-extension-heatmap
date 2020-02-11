@@ -1,16 +1,17 @@
 import layout from '../templates/components/heatmap-rendering';
-// import HeatmapRenderingCore from './heatmap-rendering-core'
-// import Component from '@ember/component';
 
-import RenderingCore from "explorviz-frontend/components/visualization/rendering/rendering-core";
 import arrayHeatmap from "../utils/array-heatmap";
 import heatmapGen from "../utils/heatmap-generator";
 import clazzHelper from "../utils/clazz-helper";
+
 import { inject as service } from '@ember/service';
 import { getOwner } from '@ember/application';
 
+import simpleheat from 'simpleheat';
 import THREE from 'three';
 
+import RenderingCore from 
+  'explorviz-frontend/components/visualization/rendering/rendering-core';
 import applyCityLayout from
   'explorviz-frontend/utils/application-rendering/city-layouter';
 import Interaction from
@@ -191,21 +192,22 @@ export default RenderingCore.extend({
 
   // @Override
   cleanup() {
-    this._super(...arguments);
-
+    
     // Remove foundation for re-rendering
     this.get('foundationBuilder').removeFoundation(this.get('store'));
-
+    
     this.set('applicationID', null);
     this.set('application3D', null);
-
+    this.set('foundationMesh', null);
+    
     this.removeListeners();
-
+    
     // Clean up landscapeRepo for visualization template
     this.set('landscapeRepo.latestApplication', null);
     this.set('landscapeRepo.replayApplication', null);
-
+    
     this.get('interaction').removeHandlers();
+    this._super(...arguments);
   },
 
   removeListeners() {
@@ -229,6 +231,11 @@ export default RenderingCore.extend({
 
     // Remove foundation for re-rendering
     this.get('foundationBuilder').removeFoundation(this.get('store'));
+
+    this.get('foundationMesh').material.emissiveMap.dispose();
+    this.get('foundationMesh').material.dispose();
+    this.get('foundationMesh').geometry.dispose();
+    this.set('foundationMesh', null);
 
     this._super(...arguments);
   },
@@ -502,41 +509,35 @@ export default RenderingCore.extend({
     // TODO: bind to heatmap button
     if (!boxEntity.get('foundation') && !isClazz) {
       transparent = true;
-      opacityValue = 0.15;
+      opacityValue = 0.10;
     }
-
+    
     const material = new THREE.MeshLambertMaterial({
-      opacity: opacityValue,
-      transparent: transparent
-    });
-
-    // Enable face colors for the foundation to set color of individual segments
-    if (boxEntity.get('foundation')) {
-      material.vertexColors = THREE.FaceColors;
-    }
-
-    material.color = new THREE.Color(color);
-      
+        opacity: opacityValue,
+        transparent: transparent
+      });
+    
     centerPoint.sub(this.get('centerAndZoomCalculator.centerPoint'));
     centerPoint.multiplyScalar(0.5);
-
+    
     const extension = new THREE.Vector3(boxEntity.get('width') / 2.0,
-      boxEntity.get('height') / 2.0, boxEntity.get('depth') / 2.0);
-
+    boxEntity.get('height') / 2.0, boxEntity.get('depth') / 2.0);
+    
     // Create new geometry with segments if the entity is foundation.
+    let useSimpleHeat = true;
     let cube;
     let segmentScalar = 0.33
     let widthSegments = Math.floor(extension.x * segmentScalar)
     let depthSegments = Math.floor(extension.z * segmentScalar)
     // TODO: Add choice of optional array heatmap vs. simple heatmap
-    if (boxEntity.get('foundation')) {
+    if (boxEntity.get('foundation') && !useSimpleHeat) {
+      // Enable face colors for the foundation to set color of individual segments
+      material.vertexColors = THREE.FaceColors;
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z, widthSegments, 1, depthSegments);
-    } /* else if (simpleheat) {
-
-    } */ else {
+    } else {
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z);
     }
-
+    material.color = new THREE.Color(color);
     const mesh = new THREE.Mesh(cube, material);
 
     // Set (optional) name of the mesh to the fqn of the component 
@@ -631,7 +632,30 @@ export default RenderingCore.extend({
   }, // END initInteraction
 
   applyHeatmap(clazzList){
+    let useArrayHeat = false;
+    let useSimpleHeat = !useArrayHeat;
 
+    let simpleHeatMap;
+    let canvas;
+    if (useSimpleHeat) {
+      canvas = document.createElement('canvas');
+      canvas.width = this.get('foundationMesh.geometry.parameters.width');
+      canvas.height = this.get('foundationMesh.geometry.parameters.depth');
+      simpleHeatMap = simpleheat(canvas);
+      simpleHeatMap.radius(5, 3);
+      simpleHeatMap.max(100);
+      simpleHeatMap.gradient({
+        0.15: "rgb(0, 0, 255)",
+        0.25: "rgb(0, 255, 255)",
+        0.35: "rgb(0, 255, 100)",
+        0.45: "rgb(0, 255, 0)",
+        0.55: "rgb(175, 255, 0)",
+        0.65: "rgb(255, 255, 0)",
+        0.75: "rgb(255, 162, 0)",
+        0.85: "rgb(255, 98, 0)",
+        1.00: "rgb(255, 0, 0)"
+      });
+    }
     // let camera = this.get('camera');
     // var helper = new THREE.CameraHelper(camera);
     // this.get('application3D').add(helper)
@@ -682,19 +706,36 @@ export default RenderingCore.extend({
 
       // Following the ray vector from the floor center get the intersection with the foundation. 
       raycaster.set(clazzPos, rayVector.normalize());
-      let intersects = raycaster.intersectObject(this.get("foundationMesh"));
+      let firstIntersection = raycaster.intersectObject(this.get("foundationMesh"))[0];
 
       // TODO: get real values and different metrics
       // Compute color only for the first intersection point for consistency if one was found.
-      if (intersects[0]){
-        arrayHeatmap.setColorValues(intersects[0].faceIndex - depthOffset, 
-                            heatmap.get(clazz.fullQualifiedName), 
-                            colorMap, 
-                            this.get('foundationMesh'));
+      if (firstIntersection){
+        if (useArrayHeat) {
+          arrayHeatmap.setColorValues(firstIntersection.faceIndex - depthOffset, 
+                              heatmap.get(clazz.fullQualifiedName), 
+                              colorMap, 
+                              this.get('foundationMesh'));
+        } else if (useSimpleHeat) {
+
+          let xPos = this.get('foundationMesh.geometry.parameters.width')/2 + firstIntersection.point.x;
+          let zPos = this.get('foundationMesh.geometry.parameters.depth')/2 + firstIntersection.point.z;
+
+          simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+50)])
+        }
       }
     });
+
+    if (useArrayHeat) {
+      arrayHeatmap.invokeRecoloring(colorMap, this.get('foundationMesh'));
+    } else if (useSimpleHeat) {
+      simpleHeatMap.draw(0.0);
+      this.get("foundationMesh").material.emissiveMap = new THREE.CanvasTexture(canvas);
+      this.get("foundationMesh").material.emissive = new THREE.Color("rgb(150,150,150)");
+      this.get("foundationMesh").material.emissiveIntensity = .5;
+      this.get("foundationMesh").material.needsUpdate = true;
+    }
     
-    arrayHeatmap.invokeRecoloring(colorMap, this.get('foundationMesh'));
     // eslint-disable-next-line no-console
     // console.log("####################################################################")
   }, // END applyHeatmap
