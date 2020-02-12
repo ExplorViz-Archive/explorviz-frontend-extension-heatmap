@@ -6,6 +6,7 @@ import clazzHelper from "../utils/clazz-helper";
 
 import { inject as service } from '@ember/service';
 import { getOwner } from '@ember/application';
+import debugLogger from 'ember-debug-logger';
 
 import simpleheat from 'simpleheat';
 import THREE from 'three';
@@ -34,6 +35,7 @@ export default RenderingCore.extend({
   // Disable generation of ember container
   tagName: '', 
   layout: layout,
+  debug: debugLogger(),
 
   applicationID: null,
   application3D: null,
@@ -58,6 +60,8 @@ export default RenderingCore.extend({
 
   interaction: null,
   interactionHandler: null,
+
+  useSimpleHeat: true,
   
   // there's already a property 'listener' in superclass RenderingCore
   listeners2: null,
@@ -232,9 +236,9 @@ export default RenderingCore.extend({
     // Remove foundation for re-rendering
     this.get('foundationBuilder').removeFoundation(this.get('store'));
 
-    this.get('foundationMesh').material.emissiveMap.dispose();
-    this.get('foundationMesh').material.dispose();
-    this.get('foundationMesh').geometry.dispose();
+    if (this.get('foundationMesh').material.emissiveMap) {
+      this.get('foundationMesh').material.emissiveMap.dispose();
+    }
     this.set('foundationMesh', null);
 
     this._super(...arguments);
@@ -524,13 +528,12 @@ export default RenderingCore.extend({
     boxEntity.get('height') / 2.0, boxEntity.get('depth') / 2.0);
     
     // Create new geometry with segments if the entity is foundation.
-    let useSimpleHeat = true;
     let cube;
     let segmentScalar = 0.33
     let widthSegments = Math.floor(extension.x * segmentScalar)
     let depthSegments = Math.floor(extension.z * segmentScalar)
     // TODO: Add choice of optional array heatmap vs. simple heatmap
-    if (boxEntity.get('foundation') && !useSimpleHeat) {
+    if (boxEntity.get('foundation') && !this.get('useSimpleHeat')) {
       // Enable face colors for the foundation to set color of individual segments
       material.vertexColors = THREE.FaceColors;
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z, widthSegments, 1, depthSegments);
@@ -632,8 +635,8 @@ export default RenderingCore.extend({
   }, // END initInteraction
 
   applyHeatmap(clazzList){
-    let useArrayHeat = false;
-    let useSimpleHeat = !useArrayHeat;
+    let useSimpleHeat = this.get('useSimpleHeat');
+    let useArrayHeat = !useSimpleHeat;
 
     let simpleHeatMap;
     let canvas;
@@ -737,6 +740,6 @@ export default RenderingCore.extend({
     }
     
     // eslint-disable-next-line no-console
-    // console.log("####################################################################")
+    this.debug("####################################################################");
   }, // END applyHeatmap
 });
