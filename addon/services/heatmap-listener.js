@@ -62,7 +62,7 @@ export default class HeatmapListener extends Service.extend(Evented) {
         // console.dir(ls, {depth:null});
 
         set(this, 'latestJsonHeatmap', jsonHeatmap);
-        const heatmapRecord = this.store.push(jsonHeatmap);
+        // const heatmapRecord = this.store.push(jsonHeatmap);
 
         // let record = this.store.peekRecord('heatmap', jsonHeatmap.data.id);
         // record.get("aggregatedHeatmap").then((aggregatedHeatmap) => {

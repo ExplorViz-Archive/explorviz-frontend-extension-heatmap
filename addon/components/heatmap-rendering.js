@@ -221,18 +221,20 @@ export default RenderingCore.extend({
   cleanAndUpdateScene() {
     // Save old rotation
     this.set('oldRotation', this.get('application3D').rotation);
-
+    
     // Remove foundation for re-rendering
     this.get('foundationBuilder').removeFoundation(this.get('store'));
-
+    
     if (this.get('foundationMesh').material.emissiveMap) {
       this.get('foundationMesh').material.emissiveMap.dispose();
     }
+    this.get('foundationMesh').geometry.dispose();
+    this.get('foundationMesh').geometry.dispose();
     this.set('foundationMesh', null);
 
     this._super(...arguments);
   },
-
+  
   // @Override
   /**
    * Update latest application in landscape repo
@@ -271,13 +273,7 @@ export default RenderingCore.extend({
 
     const self = this;
 
-    // If foundation is already set don't add a new one. The foundationObj is set to null by cleanup.
-    let foundation;
-    if(!this.get('foundationBuilder.foundationObj')){
-      foundation = this.get('foundationBuilder').createFoundation(emberApplication, this.get('store'));
-    } else {
-      foundation = this.get('foundationBuilder.foundationObj');
-    }
+    const foundation = this.get('foundationBuilder').createFoundation(emberApplication, this.get('store'));
 
     emberApplication.applyDefaultOpenLayout(self.get('initialSetupDone'));
 
@@ -613,7 +609,6 @@ export default RenderingCore.extend({
       'renderingService',
       'redrawScene',
       () => {
-        this.debug("Redrawing scene.")
         this.cleanAndUpdateScene();
       }
     ]);
@@ -722,10 +717,10 @@ export default RenderingCore.extend({
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material.emissiveMap = new THREE.CanvasTexture(canvas);
-      this.get("foundationMesh").material.emissive = new THREE.Color("rgb(150,150,150)");
+      this.get("foundationMesh").material.emissive = new THREE.Color("rgb(199,199,199)");
       this.get("foundationMesh").material.emissiveIntensity = .5;
       this.get("foundationMesh").material.needsUpdate = true;
     }
-    this.debug("####################################################################");
+    // this.debug("####################################################################");
   }, // END applyHeatmap
 });

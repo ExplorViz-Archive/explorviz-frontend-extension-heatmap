@@ -1,0 +1,16 @@
+  
+<li class="nav-item ml-2">
+  {{!-- {{#power-select @options onChange=(action "foo") as |name|}}
+    {{name}}
+  {{/power-select}} --}}
+  {{#power-select
+  options=metrics
+  selected=choice
+  onchange=(action "selectMetric")
+  placeholder="Select metric..."
+  searchEnabled=false
+  matchTriggerWidth=false
+  as |metric|}}
+  <strong>{{metric.name}}</strong>
+{{/power-select}}
+</li>
