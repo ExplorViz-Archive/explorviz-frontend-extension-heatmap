@@ -19,13 +19,14 @@ export default class HeatmapController extends Controller.extend({
   @service("rendering-service") renderingService;
   @service("repos/landscape-repository") landscapeRepo;
   @service("landscape-listener") landscapeListener;
+  @service("heatmap-listener") heatmapListener;
   @service("additional-data") additionalData;
   @service("repos/timestamp-repository") timestampRepo;
   @service("reload-handler") reloadHandler;
 
   state = null;
 
-  type = 'landscape';
+  type = 'heatmap';
 
   plotlyTimelineRef = null;
 
@@ -80,6 +81,7 @@ export default class HeatmapController extends Controller.extend({
 
   initRendering() {
     get(this, 'landscapeListener').initSSE();
+    get(this, 'heatmapListener').initSSE();
   }
 
   // @Override

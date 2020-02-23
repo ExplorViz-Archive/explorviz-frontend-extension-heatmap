@@ -13,21 +13,21 @@ export default BaseRoute.extend(AuthenticatedRouteMixin, {
     },
   
     resetRoute() {
-      this.controller.send('resetView');
-      this.controller.set('landscapeRepo.latestApplication', null);
+      this.controllerFor('heatmap').send('resetView');
+      this.controllerFor('heatmap').set('landscapeRepo.latestApplication', null);
     },
 
   actions: {
     // @Override BaseRoute
     resetRoute() {
-      this.controller.send('resetView');
-      this.controller.set('landscapeRepo.latestApplication', null);
+      this.controllerFor('heatmap').send('resetView');
+      this.controllerFor('heatmap').set('landscapeRepo.latestApplication', null);
     },
 
     // @Override
     didTransition() {
-      this.controller.hideVersionbar();
-      this.controller.showTimeline();
+      this.controllerFor('heatmap').hideVersionbar();
+      this.controllerFor('heatmap').showTimeline();
     }
   }
 });

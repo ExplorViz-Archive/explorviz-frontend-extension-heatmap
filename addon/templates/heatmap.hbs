@@ -43,7 +43,7 @@
         {{svg-jar "reply" class="octicon align-middle"}}
         {{/bs-button}}
       </div>
-      {{heatmap-rendering latestApplication=landscapeRepo.latestApplication}}
+      {{heatmap-rendering latestApplication=landscapeRepo.latestApplication latestHeatmap=heatmapRepo.lastestHeatmap}}
       <!-- popup(s) -->
       {{visualization/rendering/popups/popup-coordinator
         popupData=additionalData.popupContent}}

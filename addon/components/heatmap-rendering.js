@@ -27,6 +27,7 @@ import FoundationBuilder from
 export default RenderingCore.extend({
 
   landscapeRepo: service('repos/landscape-repository'),
+  heatmapRepo: service('repos/heatmap-repository'),
   configuration: service("configuration"),
   store: service("store"),
   highlighter: service('visualization/application/highlighter'),
@@ -34,7 +35,7 @@ export default RenderingCore.extend({
 
   // Disable generation of ember container
   tagName: '', 
-  layout: layout,
+  layout,
   debug: debugLogger(),
 
   applicationID: null,
@@ -65,16 +66,6 @@ export default RenderingCore.extend({
   
   // there's already a property 'listener' in superclass RenderingCore
   listeners2: null,
-
-  // @Override
-  /**
-   * 
-   */
-  didRender(){
-    this._super(...arguments);
-      this.initRendering();
-      this.initListener();
-  },
 
   initRendering() {
     this._super(...arguments);
@@ -196,7 +187,6 @@ export default RenderingCore.extend({
 
   // @Override
   cleanup() {
-    
     // Remove foundation for re-rendering
     this.get('foundationBuilder').removeFoundation(this.get('store'));
     
@@ -221,7 +211,6 @@ export default RenderingCore.extend({
     });
     this.set('listeners2', null);
   },
-
 
   // @Override
   /**
@@ -624,6 +613,7 @@ export default RenderingCore.extend({
       'renderingService',
       'redrawScene',
       () => {
+        this.debug("Redrawing scene.")
         this.cleanAndUpdateScene();
       }
     ]);
@@ -684,8 +674,6 @@ export default RenderingCore.extend({
     const heatmap = heatmapGen.computeHeatmap(clazzList);
 
     clazzList.forEach(clazz => { 
-    // let clazz = clazzList[0];
-
       // Calculate center point of the clazz floor. This is used for computing the corresponding
       // face on the foundation box.
       let clazzPos = new THREE.Vector3(clazz.get('positionX') +
@@ -738,8 +726,6 @@ export default RenderingCore.extend({
       this.get("foundationMesh").material.emissiveIntensity = .5;
       this.get("foundationMesh").material.needsUpdate = true;
     }
-    
-    // eslint-disable-next-line no-console
     this.debug("####################################################################");
   }, // END applyHeatmap
 });
