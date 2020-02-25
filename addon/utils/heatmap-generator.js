@@ -10,6 +10,27 @@ export function computeHeatmap(clazzList) {
   return heatmap;
 }
 
+
+// Compute the min and max values for the heatmap.
+export function computeHeatmapMinMax(map) {
+  
+  let min = 500;
+  let max = -500;
+ 
+  if (map) {
+    map.forEach((value) => {
+      if (value < min) {
+        min = value;
+      } else if (value > max){
+        max = value;   
+      }
+    })
+  }
+
+  return {"min": min, "max": max}
+}
+
+
 export function generateHeatmap(height, width, heatmap) {
   let hm = [];
   if (typeof heatmap !== 'undefined'){

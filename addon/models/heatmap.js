@@ -10,4 +10,13 @@ export default class Heatmap extends Model {
 
   @belongsTo('landscapeMetrics') aggregatedHeatmap;
   @belongsTo('landscapeMetrics') windowedHeatmap;
+  
+  getAggregatedHeatmap() {
+    return this.get("aggregatedHeatmap");
+  }
+
+  getWindowedHeatmap() {
+    return this.get("windowedHeatmap");
+  }
+
 }

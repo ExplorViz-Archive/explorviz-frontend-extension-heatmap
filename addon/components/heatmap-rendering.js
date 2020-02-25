@@ -67,6 +67,11 @@ export default RenderingCore.extend({
   // there's already a property 'listener' in superclass RenderingCore
   listeners2: null,
 
+  didRender() {
+    this._super(...arguments);
+    this.heatmapRepo.set("applicationID", this.get('latestApplication.id'));
+  },
+
   initRendering() {
     this._super(...arguments);
 
@@ -193,12 +198,15 @@ export default RenderingCore.extend({
     this.set('applicationID', null);
     this.set('application3D', null);
     this.set('foundationMesh', null);
+    this.set('clazzMetrics', null);
     
     this.removeListeners();
     
     // Clean up landscapeRepo for visualization template
     this.set('landscapeRepo.latestApplication', null);
     this.set('landscapeRepo.replayApplication', null);
+
+    this.heatmapRepo.cleanup();
     
     this.get('interaction').removeHandlers();
     this._super(...arguments);
@@ -388,6 +396,7 @@ export default RenderingCore.extend({
 
     // Get all (nested) clazzes of the application
     let clazzList = [];
+
     clazzHelper.getClazzList(foundation, clazzList);
     // Set foundationMesh for further adaption
     this.set('foundationMesh', self.get('application3D').getObjectByName(foundation.fullQualifiedName));
@@ -613,6 +622,14 @@ export default RenderingCore.extend({
       }
     ]);
 
+    this.get('listeners2').add([
+      'heatmapRepo',
+      'updatedClazzMetrics',
+      (clazzMetrics) => {
+        this.set("clazzMetrics", clazzMetrics);
+      }
+    ])
+
     // start subscriptions
     this.get('listeners2').forEach(([service, event, listenerFunction]) => {
       this.get(service).on(event, listenerFunction);
@@ -631,7 +648,7 @@ export default RenderingCore.extend({
       canvas.height = this.get('foundationMesh.geometry.parameters.depth');
       simpleHeatMap = simpleheat(canvas);
       simpleHeatMap.radius(5, 3);
-      simpleHeatMap.max(100);
+      simpleHeatMap.max(200);
       simpleHeatMap.gradient({
         0.15: "rgb(0, 0, 255)",
         0.25: "rgb(0, 255, 255)",
@@ -666,7 +683,13 @@ export default RenderingCore.extend({
     let colorMap = new Array(size).fill(0);
 
     // TODO: remove random data values
-    const heatmap = heatmapGen.computeHeatmap(clazzList);
+    const heatmap = this.get("heatmapRepo.latestClazzMetrics"); 
+    const minmax = heatmapGen.computeHeatmapMinMax(heatmap);
+    let min = minmax.min;
+    let max = minmax.max;
+
+    console.log(`min: ${min}, max: ${max}`)
+
 
     clazzList.forEach(clazz => { 
       // Calculate center point of the clazz floor. This is used for computing the corresponding
@@ -707,7 +730,7 @@ export default RenderingCore.extend({
           let xPos = this.get('foundationMesh.geometry.parameters.width')/2 + firstIntersection.point.x;
           let zPos = this.get('foundationMesh.geometry.parameters.depth')/2 + firstIntersection.point.z;
 
-          simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+50)])
+          simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+100)])
         }
       }
     });
@@ -720,7 +743,8 @@ export default RenderingCore.extend({
       this.get("foundationMesh").material.emissive = new THREE.Color("rgb(199,199,199)");
       this.get("foundationMesh").material.emissiveIntensity = .5;
       this.get("foundationMesh").material.needsUpdate = true;
+      canvas = null;
+      simpleHeatMap = null;
     }
-    // this.debug("####################################################################");
   }, // END applyHeatmap
 });

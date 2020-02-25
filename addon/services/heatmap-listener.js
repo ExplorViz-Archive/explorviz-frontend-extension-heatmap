@@ -56,28 +56,33 @@ export default class HeatmapListener extends Service.extend(Evented) {
       const jsonHeatmap = JSON.parse(event.data);
       
       if (jsonHeatmap && jsonHeatmap.hasOwnProperty('data')) {
-        // console.dir(jsonHeatmap, {depth:null});
+        console.dir(jsonHeatmap, {depth:null});
         this.debug(`Received Heatmap ${jsonHeatmap.data.id} for landscape ${jsonHeatmap.data.attributes.landscapeId}.`)
-        let ls = this.store.peekRecord('landscape', jsonHeatmap.data.attributes.landscapeId);
+        // let ls = this.store.peekRecord('landscape', jsonHeatmap.data.attributes.landscapeId);
         // console.dir(ls, {depth:null});
 
         set(this, 'latestJsonHeatmap', jsonHeatmap);
-        // const heatmapRecord = this.store.push(jsonHeatmap);
+        const heatmapRecord = this.store.push(jsonHeatmap);
 
-        // let record = this.store.peekRecord('heatmap', jsonHeatmap.data.id);
-        // record.get("aggregatedHeatmap").then((aggregatedHeatmap) => {
-        //   console.dir(aggregatedHeatmap, {depth:null});
-        //   // console.log(aggregatedHeatmap.id)
-        // });
-        // record.get("windowedHeatmap").then((windowedHeatmap) => {
-        //   console.dir(windowedHeatmap, {depth:null});
-        //   // console.log(windowedHeatmap.id)
-        // });
+        // Register the metrics the first time they are pushed.
+        if (!this.get('heatmapRepo.metrics')) {
+          let metrics = [];
 
-        // console.log('###################################');
-        
-        // set(this.heatmapRepo, 'latestHeatmap', heatmapRecord);
-        // this.heatmapRepo.triggerLatestHeatmapUpdate();
+          jsonHeatmap.data.attributes.metricTypes.forEach(type => {
+            let metric = this.store.peekAll(type).objectAt(0);
+            metrics.push({
+              name: metric.name,
+              typeName: metric.typeName,
+              description: metric.description
+            })
+          })
+
+          set(this.heatmapRepo, "metrics", metrics)
+          this.debug("Updated metric list.")
+        }
+
+        set(this.heatmapRepo, 'latestHeatmap', heatmapRecord);
+        this.heatmapRepo.triggerLatestHeatmapUpdate();
       }
     });
   }
