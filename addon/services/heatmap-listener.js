@@ -56,7 +56,7 @@ export default class HeatmapListener extends Service.extend(Evented) {
       const jsonHeatmap = JSON.parse(event.data);
       
       if (jsonHeatmap && jsonHeatmap.hasOwnProperty('data')) {
-        console.dir(jsonHeatmap, {depth:null});
+        // console.dir(jsonHeatmap, {depth:null});
         this.debug(`Received Heatmap ${jsonHeatmap.data.id} for landscape ${jsonHeatmap.data.attributes.landscapeId}.`)
         // let ls = this.store.peekRecord('landscape', jsonHeatmap.data.attributes.landscapeId);
         // console.dir(ls, {depth:null});

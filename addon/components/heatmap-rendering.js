@@ -212,7 +212,7 @@ export default RenderingCore.extend({
     // Clean up landscapeRepo for visualization template
     this.set('landscapeRepo.latestApplication', null);
     this.set('landscapeRepo.replayApplication', null);
-
+    
     this.heatmapRepo.cleanup();
     
     this.get('interaction').removeHandlers();
@@ -612,10 +612,12 @@ export default RenderingCore.extend({
 
     let simpleHeatMap;
     let canvas;
+    let foundationWidth = this.get('foundationMesh.geometry.parameters.width');
+    let foundationDepth = this.get('foundationMesh.geometry.parameters.depth');
     if (useSimpleHeat) {
       canvas = document.createElement('canvas');
-      canvas.width = this.get('foundationMesh.geometry.parameters.width');
-      canvas.height = this.get('foundationMesh.geometry.parameters.depth');
+      canvas.width = foundationWidth;
+      canvas.height = foundationDepth;
       simpleHeatMap = simpleheat(canvas);
       simpleHeatMap.radius(3, 2);
       simpleHeatMap.max(200);
@@ -639,7 +641,7 @@ export default RenderingCore.extend({
     let viewPos = this.get("foundationMesh.position").clone();
     viewPos.y = Math.max(this.get('camera').position.z * 0.8, 100);
     // viewPos.z += this.get("foundationMesh.geometry.parameters.depth") * 0.1;
-    viewPos.x -= this.get("foundationMesh.geometry.parameters.width") * 0.25;
+    viewPos.x -= foundationWidth * 0.25;
     let raycaster = new THREE.Raycaster();
 
 
@@ -668,19 +670,19 @@ export default RenderingCore.extend({
       // The vector from the viewPos to the clazz floor center point 
       let rayVector = clazzPos.clone().sub(viewPos); 
 
-      // TODO: (dev) helper lines from viewpos to floor center point to retrace face computation
-      // let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-      // let points = [];
-      // points.push(viewPos)
-      // points.push(clazzPos)
-      // points.push(clazzPos.clone().add(rayVector.multiplyScalar(0.25)))
-      // let geometry = new THREE.BufferGeometry().setFromPoints(points);
-      // let line = new THREE.Line(geometry, material);
-      // this.get('application3D').add(line);
-
       // Following the ray vector from the floor center get the intersection with the foundation. 
       raycaster.set(clazzPos, rayVector.normalize());
       let firstIntersection = raycaster.intersectObject(this.get("foundationMesh"))[0];
+
+      // TODO: (dev) helper lines from viewpos to floor center point to retrace face computation
+      let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+      let points = [];
+      // points.push(viewPos)
+      points.push(clazzPos)
+      points.push(firstIntersection.point);
+      let geometry = new THREE.BufferGeometry().setFromPoints(points);
+      let line = new THREE.Line(geometry, material);
+      this.get('application3D').add(line);
 
       // Compute color only for the first intersection point for consistency if one was found.
       if (firstIntersection){
@@ -690,10 +692,8 @@ export default RenderingCore.extend({
                               colorMap, 
                               this.get('foundationMesh'));
         } else if (useSimpleHeat) {
-
-          let xPos = this.get('foundationMesh.geometry.parameters.width')/2 + firstIntersection.point.x;
-          let zPos = this.get('foundationMesh.geometry.parameters.depth')/2 + firstIntersection.point.z;
-
+          let xPos =  this.get('centerAndZoomCalculator.centerPoint.x')/2 + firstIntersection.point.x;
+          let zPos =  this.get('centerAndZoomCalculator.centerPoint.z')/2 + firstIntersection.point.z;
           simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+100)]);
         }
       }
@@ -710,6 +710,8 @@ export default RenderingCore.extend({
       canvas = null;
       simpleHeatMap = null;
     }
+
+    this.debug("Applied new heatmap.");
   }, // END applyHeatmap
 
 
