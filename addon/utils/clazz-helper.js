@@ -13,11 +13,3 @@ export function getClazzList(component, clazzesArray){
     clazzesArray.push(clazz);
   });
 }
-
-/**
- * Returns the application metrics for a given application and metric.  
- */
-export function getApplicationMetrics(application, metric){
-
-
-}

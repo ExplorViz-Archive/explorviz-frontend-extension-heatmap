@@ -3,13 +3,6 @@ import { inject as service } from '@ember/service';
 
 import layout from '../../../../templates/components/visualization/page-setup/navbar/metric-selector';
 
-var metrics = null;
-
-const defaultChoice = {
-  name: 'Select metric...',
-  description: 'foo'
-};
-
 export default Component.extend({
 
   heatmapRepository: service('repos/heatmap-repository'),
@@ -17,7 +10,7 @@ export default Component.extend({
   tagName: '',
   layout,
 
-  metrics,
+  metrics: null,
   choice: null,
   actions: {
     selectMetric(metric) {
@@ -27,14 +20,10 @@ export default Component.extend({
      }
   },
 
-  didRender() {
+  didReceiveAttrs(){
     this._super(...arguments);
     this.set('metrics', this.get("heatmapRepository.metrics"));
-    if (!this.get("choice") && this.get("metrics")){
-      this.set("choice", this.get("metrics")[0])
-      this.set('heatmapRepository.selectedMetric', metric.typeName)
-      this.heatmapRepository.triggerMetricUpdate();
-    }
-  }
-  
+    this.set('choice', this.get('metrics')[0]);
+    this.set('heatmapRepository.selectedMetric', this.get('choice.typeName'));
+  },
 });

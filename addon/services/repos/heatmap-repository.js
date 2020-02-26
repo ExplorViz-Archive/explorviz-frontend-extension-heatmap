@@ -1,11 +1,14 @@
 import Service from '@ember/service';
+import { inject as service } from "@ember/service";
 import Evented from '@ember/object/evented';
 
 import debugLogger from 'ember-debug-logger';
 
 export default class HeatmapRepository extends Service.extend(Evented) {
+
+  @service('repos/landscape-repository') landscapeRepo;
   
-  latestHeatmap = null;
+  latestHeatmaps = null;
   latestApplicationHeatmap = null;
   latestClazzMetrics = null;
 
@@ -15,20 +18,13 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   applicationID = null;
 
   // One of "aggregatedHeatmap", "windowedHeatmap"
-  selectedMode = "aggregatedHeatmap";
+  selectedMode = "windowedHeatmap";
 
   debug = debugLogger();
 
   triggerLatestHeatmapUpdate() {
-    this.debug("Updated latest heatmap.")
-    let selectedMap = this.get("selectedMode");
-    this.get("latestHeatmap").get(selectedMap).then((aggregatedHeatmap) => {
-      if(this.get("selectedMetric") !== null) {
-        this.set("latestApplicationHeatmap", aggregatedHeatmap.getApplicationMetric(this.get("applicationID"), this.get("selectedMetric")));
-        this.set("latestClazzMetrics", this.get("latestApplicationHeatmap").getClassMetricValues());
-        this.trigger("updatedClazzMetrics", this.get("latestClazzMetrics"));
-      }
-    });
+    this.computeClazzMetrics(this.get("applicationID"));
+    this.trigger("updatedClazzMetrics", this.get("latestClazzMetrics"));
   }
 
   triggerMetricUpdate() { 
@@ -36,11 +32,24 @@ export default class HeatmapRepository extends Service.extend(Evented) {
     this.trigger("newSelectedMetric", this.get("selectedMetric"));
   }
 
+  computeClazzMetrics(applicationID) {
+    let selectedMap = this.get("latestHeatmaps")[this.get("selectedMode")];
+    let clazzMetrics = null;
+    if(this.get("selectedMetric") && applicationID) {
+      this.set("latestApplicationHeatmap", selectedMap.getApplicationMetric(applicationID, this.get("selectedMetric")));
+      clazzMetrics = this.get("latestApplicationHeatmap").getClassMetricValues();
+      this.set("latestClazzMetrics", clazzMetrics);
+      this.debug("Updated latest clazz metrics.")
+    }
+    return clazzMetrics;
+  }
+
+
   /**
    * Reset all class attribute values to null;
    */
   cleanup() {
-    this.set("latestHeatmap", null);
+    this.set("latestHeatmaps", null);
     this.set("latestApplicationHeatmap", null);
     this.set("latestClazzMetrics", null);
     this.set("metrics", null);

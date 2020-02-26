@@ -41,6 +41,8 @@ export default RenderingCore.extend({
   applicationID: null,
   application3D: null,
   foundationMesh: null,
+  
+  clazzMetrics: null,
 
   scene: null,
   webglrenderer: null,
@@ -67,9 +69,14 @@ export default RenderingCore.extend({
   // there's already a property 'listener' in superclass RenderingCore
   listeners2: null,
 
+  /**
+   * Removing original update listener for landscape and replacing it with an update 
+   * listener for heatmaps is achieved by overriding initListener() from RenderingCore 
+   */
   didRender() {
     this._super(...arguments);
-    this.heatmapRepo.set("applicationID", this.get('latestApplication.id'));
+    this.heatmapRepo.set('applicationID', this.get('latestApplication.id'));
+    this.set("clazzMetrics", this.heatmapRepo.computeClazzMetrics(this.get('latestApplication.id')));
   },
 
   initRendering() {
@@ -236,7 +243,7 @@ export default RenderingCore.extend({
     if (this.get('foundationMesh').material.emissiveMap) {
       this.get('foundationMesh').material.emissiveMap.dispose();
     }
-    this.get('foundationMesh').geometry.dispose();
+    this.get('foundationMesh').material.dispose();
     this.get('foundationMesh').geometry.dispose();
     this.set('foundationMesh', null);
 
@@ -396,7 +403,6 @@ export default RenderingCore.extend({
 
     // Get all (nested) clazzes of the application
     let clazzList = [];
-
     clazzHelper.getClazzList(foundation, clazzList);
     // Set foundationMesh for further adaption
     this.set('foundationMesh', self.get('application3D').getObjectByName(foundation.fullQualifiedName));
@@ -447,7 +453,6 @@ export default RenderingCore.extend({
   },
 
   addComponentToScene(component, color) {
-
 
     const foundationColor = this.get('configuration.applicationColors.foundation');
     const componentOddColor = this.get('configuration.applicationColors.componentOdd');
@@ -507,7 +512,7 @@ export default RenderingCore.extend({
     // TODO: bind to heatmap button
     if (!boxEntity.get('foundation') && !isClazz) {
       transparent = true;
-      opacityValue = 0.10;
+      opacityValue = 0.05;
     }
     
     const material = new THREE.MeshLambertMaterial({
@@ -601,41 +606,6 @@ export default RenderingCore.extend({
     this.set('application3D.rotation.y', rotationY);
   },
 
-  initInteraction() {
-    const canvas = this.get('canvas');
-    const camera = this.get('camera');
-    const webglrenderer = this.get('webglrenderer');
-
-    // Init interaction objects
-
-    this.get('interaction').setupInteraction(canvas, camera, webglrenderer,
-      this.get('application3D'));
-
-    // Set listeners
-    this.set('listeners2', new Set());
-
-    this.get('listeners2').add([
-      'renderingService',
-      'redrawScene',
-      () => {
-        this.cleanAndUpdateScene();
-      }
-    ]);
-
-    this.get('listeners2').add([
-      'heatmapRepo',
-      'updatedClazzMetrics',
-      (clazzMetrics) => {
-        this.set("clazzMetrics", clazzMetrics);
-      }
-    ])
-
-    // start subscriptions
-    this.get('listeners2').forEach(([service, event, listenerFunction]) => {
-      this.get(service).on(event, listenerFunction);
-    });
-  }, // END initInteraction
-
   applyHeatmap(clazzList){
     let useSimpleHeat = this.get('useSimpleHeat');
     let useArrayHeat = !useSimpleHeat;
@@ -647,7 +617,7 @@ export default RenderingCore.extend({
       canvas.width = this.get('foundationMesh.geometry.parameters.width');
       canvas.height = this.get('foundationMesh.geometry.parameters.depth');
       simpleHeatMap = simpleheat(canvas);
-      simpleHeatMap.radius(5, 3);
+      simpleHeatMap.radius(3, 2);
       simpleHeatMap.max(200);
       simpleHeatMap.gradient({
         0.15: "rgb(0, 0, 255)",
@@ -682,14 +652,9 @@ export default RenderingCore.extend({
     // Prepare color map with same size as the surface of the foundation topside
     let colorMap = new Array(size).fill(0);
 
-    // TODO: remove random data values
-    const heatmap = this.get("heatmapRepo.latestClazzMetrics"); 
+    const heatmap = this.get("clazzMetrics"); 
     const minmax = heatmapGen.computeHeatmapMinMax(heatmap);
-    let min = minmax.min;
-    let max = minmax.max;
-
-    console.log(`min: ${min}, max: ${max}`)
-
+    this.debug(`Metric min: ${minmax.min}, max: ${minmax.max}`)
 
     clazzList.forEach(clazz => { 
       // Calculate center point of the clazz floor. This is used for computing the corresponding
@@ -717,7 +682,6 @@ export default RenderingCore.extend({
       raycaster.set(clazzPos, rayVector.normalize());
       let firstIntersection = raycaster.intersectObject(this.get("foundationMesh"))[0];
 
-      // TODO: get real values and different metrics
       // Compute color only for the first intersection point for consistency if one was found.
       if (firstIntersection){
         if (useArrayHeat) {
@@ -730,7 +694,7 @@ export default RenderingCore.extend({
           let xPos = this.get('foundationMesh.geometry.parameters.width')/2 + firstIntersection.point.x;
           let zPos = this.get('foundationMesh.geometry.parameters.depth')/2 + firstIntersection.point.z;
 
-          simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+100)])
+          simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+100)]);
         }
       }
     });
@@ -741,10 +705,84 @@ export default RenderingCore.extend({
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material.emissiveMap = new THREE.CanvasTexture(canvas);
       this.get("foundationMesh").material.emissive = new THREE.Color("rgb(199,199,199)");
-      this.get("foundationMesh").material.emissiveIntensity = .5;
+      this.get("foundationMesh").material.emissiveIntensity = 1;
       this.get("foundationMesh").material.needsUpdate = true;
       canvas = null;
       simpleHeatMap = null;
     }
   }, // END applyHeatmap
+
+
+  /**
+   * @override 
+   * Replacing the landscape update listener from RenderingCore with an update listener for heatmaps.
+   */
+  initListener() {
+    this.set('listeners', new Set());
+
+    this.get('listeners').add([
+      'renderingService',
+      'reSetupScene',
+      () => {
+        this.onReSetupScene();
+      }
+    ]);
+
+    this.get('listeners').add([
+      'renderingService',
+      'resizeCanvas',
+      () => {
+        this.updateCanvasSize();
+      }
+    ]);
+
+    this.get('listeners').add([
+      'renderingService',
+      'moveCameraTo',
+      (emberModel) => {
+        this.onMoveCameraTo(emberModel);
+      }
+    ]);
+
+    this.get('listeners').add([
+      'heatmapRepo',
+      'updatedClazzMetrics',
+      (clazzMetrics) => {
+        this.set("clazzMetrics", clazzMetrics);
+        this.onUpdated();
+      }
+    ]);
+
+    // start subscriptions
+    this.get('listeners').forEach(([service, event, listenerFunction]) => {
+        this.get(service).on(event, listenerFunction);
+    });
+  }, // END initListener
+
+  initInteraction() {
+    const canvas = this.get('canvas');
+    const camera = this.get('camera');
+    const webglrenderer = this.get('webglrenderer');
+
+    // Init interaction objects
+
+    this.get('interaction').setupInteraction(canvas, camera, webglrenderer,
+      this.get('application3D'));
+
+    // Set listeners
+    this.set('listeners2', new Set());
+
+    this.get('listeners2').add([
+      'renderingService',
+      'redrawScene',
+      () => {
+        this.cleanAndUpdateScene();
+      }
+    ]);
+
+    // start subscriptions
+    this.get('listeners2').forEach(([service, event, listenerFunction]) => {
+      this.get(service).on(event, listenerFunction);
+    });
+  }, // END initInteraction
 });

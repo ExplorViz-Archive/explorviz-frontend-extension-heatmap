@@ -32,9 +32,9 @@ export default class HeatmapController extends Controller.extend({
 
   selectedTimestampRecords = [];
 
-  @computed('landscapeRepo.latestApplication')
+  @computed('landscapeRepo.latestApplication', 'heatmapRepo.metrics')
   get showLandscape() {
-    return !get(this, 'landscapeRepo.latestApplication');
+    return (!get(this, 'landscapeRepo.latestApplication')) && (!get(this, 'heatmapRepo.metrics'));
   }
 
   @action

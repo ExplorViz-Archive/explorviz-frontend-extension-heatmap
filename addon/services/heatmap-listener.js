@@ -81,8 +81,12 @@ export default class HeatmapListener extends Service.extend(Evented) {
           this.debug("Updated metric list.")
         }
 
-        set(this.heatmapRepo, 'latestHeatmap', heatmapRecord);
-        this.heatmapRepo.triggerLatestHeatmapUpdate();
+        heatmapRecord.get('aggregatedHeatmap').then((aggMap)=>{
+          heatmapRecord.get('windowedHeatmap').then((windMap)=>{
+            set(this.heatmapRepo, 'latestHeatmaps', {"aggregatedHeatmap": aggMap, "windowedHeatmap": windMap});
+            this.heatmapRepo.triggerLatestHeatmapUpdate();
+          })
+        })
       }
     });
   }
