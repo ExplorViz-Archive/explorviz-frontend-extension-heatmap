@@ -658,6 +658,8 @@ export default RenderingCore.extend({
     const minmax = heatmapGen.computeHeatmapMinMax(heatmap);
     this.debug(`Metric min: ${minmax.min}, max: ${minmax.max}`)
 
+    const selectedMode = this.get('heatmapRepo.selectedMode');
+
     clazzList.forEach(clazz => { 
       // Calculate center point of the clazz floor. This is used for computing the corresponding
       // face on the foundation box.
@@ -694,7 +696,14 @@ export default RenderingCore.extend({
         } else if (useSimpleHeat) {
           let xPos =  this.get('centerAndZoomCalculator.centerPoint.x')/2 + firstIntersection.point.x;
           let zPos =  this.get('centerAndZoomCalculator.centerPoint.z')/2 + firstIntersection.point.z;
-          simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+100)]);
+
+          if (selectedMode === "aggregatedHeatmap") {
+            simpleHeatMap.add([xPos, zPos, heatmap.get(clazz.fullQualifiedName)]);
+          }else {
+            simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+100)]);
+          }
+
+
         }
       }
     });
