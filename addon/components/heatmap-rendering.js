@@ -534,6 +534,8 @@ export default RenderingCore.extend({
         new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
         new THREE.MeshLambertMaterial({color: new THREE.Color(color)})
       ]
+      // TODO: Hacky way to disable hoverHandler without throwing error
+      material.color = new THREE.Color(color);
     } else {
       material= new THREE.MeshLambertMaterial({
         opacity: opacityValue,
