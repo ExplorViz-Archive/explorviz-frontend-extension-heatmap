@@ -5,7 +5,7 @@ export default class Metric extends Model{
   @attr('string') typeName;
   @attr('string') description;
 
-  @belongsTo('landscapeMetrics', {inverse:"metrics"}) parent;
+  @belongsTo('landscapeMetric', {inverse:"metrics"}) parent;
 
   get metricAttributes(){
     return `${this.name}`

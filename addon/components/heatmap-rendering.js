@@ -509,13 +509,13 @@ export default RenderingCore.extend({
     let opacityValue = 1.0;
 
     // Override transparency for heatmap mode
-    // TODO: bind to heatmap button
+    // TODO: bind to heatmap button?
     if (!boxEntity.get('foundation') && !isClazz) {
       transparent = true;
       opacityValue = 0.05;
     }
     
-    const material = new THREE.MeshLambertMaterial({
+    let material = new THREE.MeshLambertMaterial({
         opacity: opacityValue,
         transparent: transparent
       });
@@ -704,7 +704,7 @@ export default RenderingCore.extend({
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material.emissiveMap = new THREE.CanvasTexture(canvas);
-      this.get("foundationMesh").material.emissive = new THREE.Color("rgb(199,199,199)");
+      this.get("foundationMesh").material.emissive = new THREE.Color("rgb(255,255, 255)");
       this.get("foundationMesh").material.emissiveIntensity = 1;
       this.get("foundationMesh").material.needsUpdate = true;
       canvas = null;
@@ -718,6 +718,7 @@ export default RenderingCore.extend({
   /**
    * @override 
    * Replacing the landscape update listener from RenderingCore with an update listener for heatmaps.
+   * The heatmap Listener is placed in 'listeners2' below.
    */
   initListener() {
     this.set('listeners', new Set());
@@ -743,15 +744,6 @@ export default RenderingCore.extend({
       'moveCameraTo',
       (emberModel) => {
         this.onMoveCameraTo(emberModel);
-      }
-    ]);
-
-    this.get('listeners').add([
-      'heatmapRepo',
-      'updatedClazzMetrics',
-      (clazzMetrics) => {
-        this.set("clazzMetrics", clazzMetrics);
-        this.onUpdated();
       }
     ]);
 
@@ -782,6 +774,23 @@ export default RenderingCore.extend({
       }
     ]);
 
+    this.get('listeners2').add([
+      'heatmapRepo',
+      'newSelectedMetric',
+      (clazzMetrics) => {
+        this.set("clazzMetrics", clazzMetrics);
+        this.cleanAndUpdateScene();
+      }
+    ]);
+    
+    this.get('listeners2').add([
+      'heatmapRepo',
+      'updatedClazzMetrics',
+      (clazzMetrics) => {
+        this.set("clazzMetrics", clazzMetrics);
+        this.onUpdated();
+      }
+    ]);
     // start subscriptions
     this.get('listeners2').forEach(([service, event, listenerFunction]) => {
       this.get(service).on(event, listenerFunction);

@@ -30,8 +30,8 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   }
 
   triggerMetricUpdate() { 
-    this.debug(`Updating selected metric to ${this.selectedMetric}`);
-    this.trigger("newSelectedMetric", this.get("selectedMetric"));
+    this.computeClazzMetrics(this.get("applicationID"));
+    this.trigger("newSelectedMetric", this.get("latestClazzMetrics"));
   }
 
   computeClazzMetrics(applicationID) {
@@ -57,6 +57,7 @@ export default class HeatmapRepository extends Service.extend(Evented) {
     this.set("selectedMetric", null);
     this.set("applicationID", null);
     this.set("selectedMode", defaultMode);
+    this.set("metrics", null);
   }
 
 }
