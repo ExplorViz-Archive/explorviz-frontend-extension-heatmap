@@ -8,8 +8,8 @@ export default class Heatmap extends Model {
   @attr('number') timestamp;
   @attr('string') landscapeId;
 
-  @belongsTo('landscapeMetrics') aggregatedHeatmap;
-  @belongsTo('landscapeMetrics') windowedHeatmap;
+  @belongsTo('landscapeMetric') aggregatedHeatmap;
+  @belongsTo('landscapeMetric') windowedHeatmap;
   
   getAggregatedHeatmap() {
     return this.get("aggregatedHeatmap");

@@ -18,11 +18,12 @@ export default class HeatmapController extends Controller.extend({
 
   @service("rendering-service") renderingService;
   @service("repos/landscape-repository") landscapeRepo;
+  @service("repos/heatmap-repository") heatmapRepo;
   @service("landscape-listener") landscapeListener;
   @service("heatmap-listener") heatmapListener;
   @service("additional-data") additionalData;
   @service("repos/timestamp-repository") timestampRepo;
-  @service("reload-handler") reloadHandler;
+  @service("heatmap-reload-handler") heatmapReloadHandler;
 
   state = null;
 
@@ -34,7 +35,7 @@ export default class HeatmapController extends Controller.extend({
 
   @computed('landscapeRepo.latestApplication', 'heatmapRepo.metrics')
   get showLandscape() {
-    return (!get(this, 'landscapeRepo.latestApplication')) && (!get(this, 'heatmapRepo.metrics'));
+    return (!get(this, 'landscapeRepo.latestApplication')) || (!get(this, 'heatmapRepo.metrics'));
   }
 
   @action
@@ -62,7 +63,7 @@ export default class HeatmapController extends Controller.extend({
   @action
   timelineClicked(timestampRecordArray) {
     set(this, "selectedTimestampRecords", timestampRecordArray);
-    get(this, 'reloadHandler').loadLandscapeById(timestampRecordArray[0].get("timestamp"));
+    get(this, 'heatmapReloadHandler').loadModelByTimestamp(timestampRecordArray[0].get("timestamp"));
   }
 
   @action

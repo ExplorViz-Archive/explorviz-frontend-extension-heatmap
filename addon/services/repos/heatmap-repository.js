@@ -4,6 +4,9 @@ import Evented from '@ember/object/evented';
 
 import debugLogger from 'ember-debug-logger';
 
+// One of "aggregatedHeatmap", "windowedHeatmap"
+const defaultMode = "windowedHeatmap"
+
 export default class HeatmapRepository extends Service.extend(Evented) {
 
   @service('repos/landscape-repository') landscapeRepo;
@@ -17,8 +20,7 @@ export default class HeatmapRepository extends Service.extend(Evented) {
 
   applicationID = null;
 
-  // One of "aggregatedHeatmap", "windowedHeatmap"
-  selectedMode = "windowedHeatmap";
+  selectedMode = defaultMode;
 
   debug = debugLogger();
 
@@ -52,10 +54,9 @@ export default class HeatmapRepository extends Service.extend(Evented) {
     this.set("latestHeatmaps", null);
     this.set("latestApplicationHeatmap", null);
     this.set("latestClazzMetrics", null);
-    this.set("metrics", null);
     this.set("selectedMetric", null);
     this.set("applicationID", null);
-    this.set("selectedMode", "aggregatedHeatmap");
+    this.set("selectedMode", defaultMode);
   }
 
 }

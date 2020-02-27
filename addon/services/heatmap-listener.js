@@ -12,29 +12,36 @@ export default class HeatmapListener extends Service.extend(Evented) {
 
   // https://github.com/segmentio/sse/blob/master/index.js
 
-  // content null;
   @service('session') session;
   @service('store') store;
+  @service('landscape-listener') landscapeListener;
   @service('repos/heatmap-repository') heatmapRepo;
-  // @service('repos/timestamp-repository') timestampRepo!;
   @service('repos/landscape-repository') landscapeRepo;
+  
   latestJsonHeatmap = null;
-  // modelUpdater = null;
+  
   es = null;
 
   pauseVisualizationReload = false;
 
   debug = debugLogger();
 
-  constructor() {
-    super(...arguments);
+  init() {
+    super.init(...arguments);
+
+    /**
+     * Resume the visualization, when landscape listener is reactivated.
+     */
+    this.get('landscapeListener').on('visualizationResumed', () => {
+      this.startVisualizationReload();
+    });
   }
 
   initSSE() {
     set(this, 'content', []);
 
     const url = config.APP.API_ROOT;
-    const { access_token } = this.session.data.authenticated;
+    // const { access_token } = this.session.data.authenticated;
 
     // Close former event source. Multiple (>= 6) instances cause the ember store to no longer work
     let es = this.es;
@@ -56,37 +63,40 @@ export default class HeatmapListener extends Service.extend(Evented) {
       const jsonHeatmap = JSON.parse(event.data);
       
       if (jsonHeatmap && jsonHeatmap.hasOwnProperty('data')) {
-        // console.dir(jsonHeatmap, {depth:null});
+        
         this.debug(`Received Heatmap ${jsonHeatmap.data.id} for landscape ${jsonHeatmap.data.attributes.landscapeId}.`)
-        // let ls = this.store.peekRecord('landscape', jsonHeatmap.data.attributes.landscapeId);
-        // console.dir(ls, {depth:null});
-
-        set(this, 'latestJsonHeatmap', jsonHeatmap);
-        const heatmapRecord = this.store.push(jsonHeatmap);
-
-        // Register the metrics the first time they are pushed.
-        if (!this.get('heatmapRepo.metrics')) {
-          let metrics = [];
-
-          jsonHeatmap.data.attributes.metricTypes.forEach(type => {
-            let metric = this.store.peekAll(type).objectAt(0);
-            metrics.push({
-              name: metric.name,
-              typeName: metric.typeName,
-              description: metric.description
+        if (!this.pauseVisualizationReload) {
+          set(this, 'latestJsonHeatmap', jsonHeatmap);
+          const heatmapRecord = this.store.push(jsonHeatmap);
+  
+          // Register the metrics the first time they are pushed.
+          if (!this.get('heatmapRepo.metrics')) {
+            let metrics = [];
+  
+            jsonHeatmap.data.attributes.metricTypes.forEach(type => {
+              let metric = this.store.peekAll(type).objectAt(0);
+              metrics.push({
+                name: metric.name,
+                typeName: metric.typeName,
+                description: metric.description
+              })
+            })
+  
+            set(this.heatmapRepo, "metrics", metrics)
+            this.debug("Updated metric list.")
+          }
+  
+          heatmapRecord.get('aggregatedHeatmap').then((aggMap)=>{
+            heatmapRecord.get('windowedHeatmap').then((windMap)=>{
+              set(this.heatmapRepo, 'latestHeatmaps', {"aggregatedHeatmap": aggMap, "windowedHeatmap": windMap});
+              this.heatmapRepo.triggerLatestHeatmapUpdate();
             })
           })
 
-          set(this.heatmapRepo, "metrics", metrics)
-          this.debug("Updated metric list.")
+        } else {
+            // visualization is paused
+            this.debug("Visualization update paused");
         }
-
-        heatmapRecord.get('aggregatedHeatmap').then((aggMap)=>{
-          heatmapRecord.get('windowedHeatmap').then((windMap)=>{
-            set(this.heatmapRepo, 'latestHeatmaps', {"aggregatedHeatmap": aggMap, "windowedHeatmap": windMap});
-            this.heatmapRepo.triggerLatestHeatmapUpdate();
-          })
-        })
       }
     });
   }
@@ -100,9 +110,26 @@ export default class HeatmapListener extends Service.extend(Evented) {
 
     source.onerror = (event) => {
       if (source.readyState !== EventSource.CLOSED)
+        // eslint-disable-next-line no-console
         console.error(event);
     };
 
     return source.close.bind(source);
+  }
+
+  toggleVisualizationReload() {
+    if (this.pauseVisualizationReload) {
+      this.startVisualizationReload();
+    } else {
+      this.stopVisualizationReload();
+    }
+  }
+
+  startVisualizationReload() {
+    set(this, 'pauseVisualizationReload', false);
+  }
+
+  stopVisualizationReload() {
+    set(this, 'pauseVisualizationReload', true);
   }
 }
