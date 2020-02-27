@@ -240,10 +240,18 @@ export default RenderingCore.extend({
     // Remove foundation for re-rendering
     this.get('foundationBuilder').removeFoundation(this.get('store'));
     
-    if (this.get('foundationMesh').material.emissiveMap) {
-      this.get('foundationMesh').material.emissiveMap.dispose();
+    if (this.get('useSimpleHeat')) {
+      this.get('foundationMesh').material.forEach( (mat) => {
+        if (mat.emissiveMap) {
+          mat.emissiveMap.dispose();
+        }
+        mat.dispose();
+      })
+      // Set to single material to allow disposal in super.cleanAndUpdateScene()
+      this.get('foundationMesh').material = new THREE.MeshBasicMaterial();
+    } else {
+      this.get('foundationMesh').material.dispose();
     }
-    this.get('foundationMesh').material.dispose();
     this.get('foundationMesh').geometry.dispose();
     this.set('foundationMesh', null);
 
@@ -515,10 +523,24 @@ export default RenderingCore.extend({
       opacityValue = 0.05;
     }
     
-    let material = new THREE.MeshLambertMaterial({
+    let material ;
+    // Create a multi material for the simple heat mode
+    if (boxEntity.get('foundation') && this.get('useSimpleHeat')) {
+      material = [
+        new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
+        new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
+        new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
+        new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
+        new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
+        new THREE.MeshLambertMaterial({color: new THREE.Color(color)})
+      ]
+    } else {
+      material= new THREE.MeshLambertMaterial({
         opacity: opacityValue,
-        transparent: transparent
+        transparent: transparent,
+        color: new THREE.Color(color)
       });
+    }
     
     centerPoint.sub(this.get('centerAndZoomCalculator.centerPoint'));
     centerPoint.multiplyScalar(0.5);
@@ -539,7 +561,7 @@ export default RenderingCore.extend({
     } else {
       cube = new THREE.BoxGeometry(extension.x, extension.y, extension.z);
     }
-    material.color = new THREE.Color(color);
+    
     const mesh = new THREE.Mesh(cube, material);
 
     // Set (optional) name of the mesh to the fqn of the component 
@@ -703,10 +725,10 @@ export default RenderingCore.extend({
       arrayHeatmap.invokeRecoloring(colorMap, this.get('foundationMesh'));
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
-      this.get("foundationMesh").material.emissiveMap = new THREE.CanvasTexture(canvas);
-      this.get("foundationMesh").material.emissive = new THREE.Color("rgb(255,255, 255)");
-      this.get("foundationMesh").material.emissiveIntensity = 1;
-      this.get("foundationMesh").material.needsUpdate = true;
+      this.get("foundationMesh").material[2].emissiveMap = new THREE.CanvasTexture(canvas);
+      this.get("foundationMesh").material[2].emissive = new THREE.Color("rgb(255,255, 255)");
+      this.get("foundationMesh").material[2].emissiveIntensity = 1;
+      this.get("foundationMesh").material[2].needsUpdate = true;
       canvas = null;
       simpleHeatMap = null;
     }
