@@ -652,8 +652,8 @@ export default RenderingCore.extend({
         0.45: "rgb(0, 255, 0)",
         0.55: "rgb(175, 255, 0)",
         0.65: "rgb(255, 255, 0)",
-        0.75: "rgb(255, 162, 0)",
-        0.85: "rgb(255, 98, 0)",
+        0.75: "rgb(255, 125, 0)",
+        0.85: "rgb(255, 75, 0)",
         1.00: "rgb(255, 0, 0)"
       });
     }
@@ -737,7 +737,7 @@ export default RenderingCore.extend({
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material[2].emissiveMap = new THREE.CanvasTexture(canvas);
-      this.get("foundationMesh").material[2].emissive = new THREE.Color("rgb(255,255, 255)");
+      this.get("foundationMesh").material[2].emissive = new THREE.Color("rgb(199, 199, 199)");
       this.get("foundationMesh").material[2].emissiveIntensity = 1;
       this.get("foundationMesh").material[2].needsUpdate = true;
       canvas = null;
