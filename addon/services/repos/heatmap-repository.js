@@ -5,7 +5,7 @@ import Evented from '@ember/object/evented';
 import debugLogger from 'ember-debug-logger';
 
 // One of "aggregatedHeatmap", "windowedHeatmap"
-const defaultMode = "aggregatedHeatmap"
+const defaultMode = "windowedHeatmap"
 
 export default class HeatmapRepository extends Service.extend(Evented) {
 

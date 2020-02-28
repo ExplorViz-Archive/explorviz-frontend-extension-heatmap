@@ -77,7 +77,7 @@ export function setColorValues(index, heatValue, colorMap, foundationMesh) {
    * 
    * @param {Number[]} colorMap 
    */
-export function invokeRecoloring(colorMap, foundationMesh){
+export function invokeRecoloring(colorMap, foundationMesh, maximumValue){
   let depthSegments = foundationMesh.userData.depthSegments;
   let widthSegments = foundationMesh.userData.widthSegments;
 
@@ -87,7 +87,7 @@ export function invokeRecoloring(colorMap, foundationMesh){
   let size = widthSegments * depthSegments * 2;
   for(let i = 0; i < size; i+= 1){
     if (colorMap[i]) {
-      let color = heatmapGen.computeGradient(colorMap[i]);
+      let color = heatmapGen.computeGradient(colorMap[i], maximumValue);
       foundationMesh.geometry.faces[i + depthOffset].color.set(color);
     }
   }
