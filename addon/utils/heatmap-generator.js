@@ -62,24 +62,28 @@ export function applyGradients(heatmap) {
   return gradientmap;
 }
 
-export function computeGradient(int) {
+export function computeGradient(requestedValue, maximumValue) {
   let val = "";
+  let gradientValue = 0;
+  if (maximumValue > 0) {
+    gradientValue = requestedValue/maximumValue;
+  }
 
-  if (int <= -35) { //-* - -35
+  if (gradientValue <= -0.35) { //-* - -35
     val = "rgb(0, 0, 255)"
-  } else if (int <= -25) { //-34 - -25
+  } else if (gradientValue <= -0.25) { //-34 - -25
     val = "rgb(0, 255, 255)"
-  } else if (int <= -15) { //-26 - -15
+  } else if (gradientValue <= -0.15) { //-26 - -15
     val = "rgb(0, 255, 100)"
-  }else if (int <= -5) { //-14 - -5
+  }else if (gradientValue <= -0.05) { //-14 - -5
     val = "rgb(209, 255, 227)"
-  } else if (int <= 5) { //-6 - 5
+  } else if (gradientValue <= 0.05) { //-6 - 5
     val = "rgb(255, 255, 255)"
-  }else if (int <= 15) { //6 - 15
+  }else if (gradientValue <= 0.15) { //6 - 15
     val = "rgb(255, 255, 0)"
-  } else if (int <= 25) { // 14 - 25
+  } else if (gradientValue <= 0.25) { // 14 - 25
     val = "rgb(255, 162, 0)"
-  } else if (int <= 35) { // 26 - 35
+  } else if (gradientValue <= 0.35) { // 26 - 35
     val = "rgb(255, 98, 0)"
   } else {  // 36 - * 
     val = "rgb(255, 0, 0)"

@@ -64,7 +64,7 @@ export default RenderingCore.extend({
   interaction: null,
   interactionHandler: null,
 
-  useSimpleHeat: true,
+  useSimpleHeat: false,
   
   // there's already a property 'listener' in superclass RenderingCore
   listeners2: null,
@@ -634,6 +634,8 @@ export default RenderingCore.extend({
     let useSimpleHeat = this.get('useSimpleHeat');
     let useArrayHeat = !useSimpleHeat;
 
+    let maximumValue = 200;
+
     let simpleHeatMap;
     let canvas;
     let foundationWidth = this.get('foundationMesh.geometry.parameters.width');
@@ -644,7 +646,7 @@ export default RenderingCore.extend({
       canvas.height = foundationDepth;
       simpleHeatMap = simpleheat(canvas);
       simpleHeatMap.radius(3, 2);
-      simpleHeatMap.max(200);
+      simpleHeatMap.max(maximumValue);
       simpleHeatMap.gradient({
         0.15: "rgb(0, 0, 255)",
         0.25: "rgb(0, 255, 255)",
@@ -713,10 +715,18 @@ export default RenderingCore.extend({
       // Compute color only for the first intersection point for consistency if one was found.
       if (firstIntersection){
         if (useArrayHeat) {
-          arrayHeatmap.setColorValues(firstIntersection.faceIndex - depthOffset, 
-                              heatmap.get(clazz.fullQualifiedName), 
-                              colorMap, 
-                              this.get('foundationMesh'));
+
+          if (selectedMode === "aggregatedHeatmap") {
+            arrayHeatmap.setColorValues(firstIntersection.faceIndex - depthOffset, 
+              heatmap.get(clazz.fullQualifiedName)-100, 
+              colorMap, 
+              this.get('foundationMesh'));
+          }else {
+            arrayHeatmap.setColorValues(firstIntersection.faceIndex - depthOffset, 
+              heatmap.get(clazz.fullQualifiedName), 
+              colorMap, 
+              this.get('foundationMesh'));
+          }
         } else if (useSimpleHeat) {
           let xPos =  this.get('centerAndZoomCalculator.centerPoint.x')/2 + firstIntersection.point.x;
           let zPos =  this.get('centerAndZoomCalculator.centerPoint.z')/2 + firstIntersection.point.z;
@@ -733,7 +743,7 @@ export default RenderingCore.extend({
     });
 
     if (useArrayHeat) {
-      arrayHeatmap.invokeRecoloring(colorMap, this.get('foundationMesh'));
+      arrayHeatmap.invokeRecoloring(colorMap, this.get('foundationMesh'), maximumValue);
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material[2].emissiveMap = new THREE.CanvasTexture(canvas);
@@ -744,7 +754,7 @@ export default RenderingCore.extend({
       simpleHeatMap = null;
     }
 
-    this.debug("Applied new heatmap.");
+    this.debug(`Applied new ${selectedMode} for ${this.get("heatmapRepo.selectedMetric")}.`);
   }, // END applyHeatmap
 
 
