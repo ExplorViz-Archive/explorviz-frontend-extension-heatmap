@@ -1,0 +1,45 @@
+<div class="container">
+
+    <h4>Heatmap modes</h4>
+
+    {{#power-select
+      options=heatmapModes
+      selected=selectedMode
+      onchange=(action "setHeatmapMode")
+      placeholder="Select heatmap mode..."
+      searchEnabled=false
+      matchTriggerWidth=false
+      as |heatmapMode|
+    }}
+      <strong>{{heatmapMode.name}}</strong>
+    {{/power-select}}
+
+    <h4 class="mt-5">Use simpleheat visualization</h4>
+
+    {{#power-select
+      options=dropdownOptions
+      selected=useSimpleHeat
+      onchange=(action "setUseSimpleHeat")
+      placeholder="Select visualization type..."
+      searchEnabled=false
+      matchTriggerWidth=false
+      as |option|
+    }}
+      <strong>{{option}}</strong>
+    {{/power-select}}
+
+    <h4 class="mt-5">Helper lines</h4>
+
+    {{#power-select
+      options=dropdownOptions
+      selected=useHelperLines
+      onchange=(action "setUseHelperLines")
+      placeholder="Select heatmap mode..."
+      searchEnabled=false
+      matchTriggerWidth=false
+      as |option|
+    }}
+      <strong>{{option}}</strong>
+    {{/power-select}}
+
+</div>

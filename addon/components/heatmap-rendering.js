@@ -64,7 +64,8 @@ export default RenderingCore.extend({
   interaction: null,
   interactionHandler: null,
 
-  useSimpleHeat: false,
+  useSimpleHeat: true,
+  useHelperLines: true,
   
   // there's already a property 'listener' in superclass RenderingCore
   listeners2: null,
@@ -83,6 +84,8 @@ export default RenderingCore.extend({
     this._super(...arguments);
 
     this.set('oldRotation', { x: 0, y: 0 });
+    this.set('useSimpleHeat', this.get('heatmapRepo.useSimpleHeat'));
+    this.set('useHelperLines', this.get('heatmapRepo.useHelperLines'));
     
     this.onReSetupScene = function () {
       this.resetRotation();
@@ -678,15 +681,16 @@ export default RenderingCore.extend({
       raycaster.set(clazzPos, rayVector.normalize());
       let firstIntersection = raycaster.intersectObject(this.get("foundationMesh"))[0];
 
-      // TODO: (dev) helper lines from viewpos to floor center point to retrace face computation
-      let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
-      let points = [];
-      // points.push(viewPos)
-      points.push(clazzPos)
-      points.push(firstIntersection.point);
-      let geometry = new THREE.BufferGeometry().setFromPoints(points);
-      let line = new THREE.Line(geometry, material);
-      this.get('application3D').add(line);
+      if (this.get('useHelperLines')) {
+        let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+        let points = [];
+        // points.push(viewPos)
+        points.push(clazzPos)
+        points.push(firstIntersection.point);
+        let geometry = new THREE.BufferGeometry().setFromPoints(points);
+        let line = new THREE.Line(geometry, material);
+        this.get('application3D').add(line);
+      }
 
       // Compute color only for the first intersection point for consistency if one was found.
       if (firstIntersection){
