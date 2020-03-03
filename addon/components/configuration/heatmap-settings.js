@@ -2,20 +2,16 @@ import Component from '@ember/component';
 import {inject as service} from '@ember/service';
 import layout from '../../templates/components/configuration/heatmap-settings';
 
-
-
-
 export default Component.extend({
-
+  
   layout,
-
+  
   heatmapRepo: service('repos/heatmap-repository'),
-
+  
+  descriptions: null,
   selectedMode: null,
-  useSimpleHeat: null,
-  useHelperLines: null,
-  simpleHeatGradient: null,
-  shCollapsed: true,
+  shVisible: false,
+  ahVisible: false,
 
   init() {
     this._super(...arguments);
@@ -25,16 +21,22 @@ export default Component.extend({
       {name: "Windowed Heatmap", id: "windowedHeatmap"}
     ];
 
-    this.dropdownOptions = this.dropdownOptions || ["Enable", "Disable"];
+    this.descriptions = this.descriptions ||  {
+      heatmapMode: "Aggregated Heatmap: The previous heatmaps influence the current"  
+        + " value to a certain amount. Windowed Heatmap: The landscape metrics are" 
+        + " compared with the respective value of the time window specified in the backend.",
+      visualizationMode: "Use a heatmap visualized with simpleheat or an array based heatmap.",
+      helperLines: "Show the helper lines to determine which point on the heatmap belongs to which class.",
+      shGradient: "Configure the simple heat gradient. Use either rgb, hex or css-style format.",
+      ahGradient: "Configure the array heat gradient. Use either rgb, hex or css-style format."
+        + " The first stop value that is true for a metric is used."
+    };
 
-    this.simpleHeatGradient = this.simpleHeatGradient || {};
   },
 
   didReceiveAttrs(){
     this._super(...arguments);
     this.set('selectedMode', (this.get('heatmapRepo.selectedMode')==="aggregatedHeatmap")? this.heatmapModes[0] : this.heatmapModes[1]);
-    this.set('useSimpleHeat', this.get('heatmapRepo.useSimpleHeat')? "Enable" : "Disable");
-    this.set('useHelperLines', this.get('heatmapRepo.useHelperLines')? "Enable" : "Disable");
   },
 
   actions: {
@@ -44,18 +46,6 @@ export default Component.extend({
       this.set('heatmapRepo.selectedMode', mapMode.id);
       this.get('heatmapRepo').triggerLatestHeatmapUpdate();
     },
-
-    setUseSimpleHeat(selection) {
-      this.set('useSimpleHeat', selection);
-      this.set('heatmapRepo.useSimpleHeat', !this.get('heatmapRepo.useSimpleHeat'));
-      this.get('heatmapRepo').triggerConfigChanged();
-    },
-
-    setUseHelperLines(selection) {
-      this.set('useHelperLines', selection);
-      this.set('heatmapRepo.useHelperLines', !this.get('heatmapRepo.useHelperLines'));
-      this.get('heatmapRepo').triggerConfigChanged();
-    },
-
   },
+
 });

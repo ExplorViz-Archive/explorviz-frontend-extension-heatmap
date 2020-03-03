@@ -1,79 +1,122 @@
 <div class="container">
+  <h4>Rendering configuration</h4>
 
-    <h4>Heatmap modes</h4>
+    <div class="pl-3 py-2">
+      <div class="d-flex justify-content-between pr-1">
+        <div>
+          Choose heatmap mode
+          <HelpTooltipRight @title={{this.descriptions.heatmapMode}} />
+        </div>
+        <div class="align-items-end">
+        {{#power-select
+          options=heatmapModes
+          selected=selectedMode
+          onchange=(action "setHeatmapMode")
+          placeholder="Select heatmap mode..."
+          searchEnabled=false
+          matchTriggerWidth=false
+          as |heatmapMode|
+        }}
+          <strong>{{heatmapMode.name}}</strong>
+        {{/power-select}}
+        </div>
+      </div>
+    </div>
 
-    {{#power-select
-      options=heatmapModes
-      selected=selectedMode
-      onchange=(action "setHeatmapMode")
-      placeholder="Select heatmap mode..."
-      searchEnabled=false
-      matchTriggerWidth=false
-      as |heatmapMode|
-    }}
-      <strong>{{heatmapMode.name}}</strong>
-    {{/power-select}}
+    <div class="pl-3">
+      <div class="d-flex justify-content-between pr-3">
+        <div>
+          Use simple heat visualization
+          <HelpTooltipRight @title={{this.descriptions.visualizationMode}} />
+        </div>
+        <div>
+        <XToggle
+          @theme='skewed'
+          @onLabel='Yes'
+          @offLabel='No'
+          @value={{get this.heatmapRepo "useSimpleHeat"}}
+          @onToggle={{action (mut (get this.heatmapRepo "useSimpleHeat"))}}
+        />
+        </div>
+      </div>
+    </div>
 
-    <h4 class="mt-5">Use simpleheat visualization</h4>
+    <div class="pl-3">
+      <div class="d-flex justify-content-between pr-3">
+        <div>
+          Use helper lines
+          <HelpTooltipRight @title={{this.descriptions.helperLines}} />
+        </div>
+        <XToggle
+          @theme='skewed'
+          @onLabel='Yes'
+          @offLabel='No'
+          @value={{get this.heatmapRepo "useHelperLines"}}
+          @onToggle={{action (mut (get this.heatmapRepo "useHelperLines"))}}
+        />
+      </div>
+    </div>
 
-    {{#power-select
-      options=dropdownOptions
-      selected=useSimpleHeat
-      onchange=(action "setUseSimpleHeat")
-      placeholder="Select visualization type..."
-      searchEnabled=false
-      matchTriggerWidth=false
-      as |option|
-    }}
-      <strong>{{option}}</strong>
-    {{/power-select}}
 
-    <h4 class="mt-5">Helper lines</h4>
+    <div class="d-flex justify-content-between pr-3 mt-5">
+      <div>
+        <h4>Simpleheat gradient configuration 
+          <HelpTooltipRight @title={{this.descriptions.shGradient}} />
+        </h4>
+      </div>
+      <XToggle
+        @theme='flat'
+        @value={{this.shVisible}}
+        @onToggle={{action (mut this.shVisible)}}
+      />
+    </div>
+    {{#if this.shVisible}}
+      <div class="row">
+        {{#each-in this.heatmapRepo.simpleHeatGradient as |key val|}}
+          <div class="col-md-4 col-lg-2 col-xl-2 mt-3">
+            <div>
+              Stop value: {{revert-key key '_' '.'}}
+            </div>
+            <div id="{{concat "sh-gradient-" key}}" class="input-group">
+              <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.simpleHeatGradient key)}}/>
+            </div>
+          </div>
+        {{else}}
+          ERR: Gradient is empty.
+        {{/each-in}}
+      </div>
+    {{/if}}
 
-    {{#power-select
-      options=dropdownOptions
-      selected=useHelperLines
-      onchange=(action "setUseHelperLines")
-      placeholder="Select heatmap mode..."
-      searchEnabled=false
-      matchTriggerWidth=false
-      as |option|
-    }}
-      <strong>{{option}}</strong>
-    {{/power-select}}
+    <div class="d-flex justify-content-between pr-3 mt-5">
+      <div>
+        <h4>
+          Array heatmap gradient configuration
+          <HelpTooltipRight @title={{this.descriptions.ahGradient}} />      
+        </h4>
+      </div>
+      <XToggle
+        @theme='flat'
+        @value={{this.ahVisible}}
+        @onToggle={{action (mut this.ahVisible)}}
+      />
+    </div>
+    {{#if this.ahVisible}}
+      <div class="row">
+        {{#each-in this.heatmapRepo.arrayHeatGradient as |key val|}}
+          <div class="col-md-4 col-lg-2 col-xl-2 mt-3">
+            <div>
+              Stop value: {{revert-key key '_' '.'}}
+            </div>
+            <div id="{{concat "ah-gradient-" key}}" class="input-group">
+              <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.arrayHeatGradient key)}}/>
+            </div>
+          </div>
+        {{else}}
+          ERR: Gradient is empty.
+        {{/each-in}}
+      </div>
+    {{/if}}
 
-    <h4 class="mt-5">Simpleheat configuration</h4>
     
-    <div class="row">
-    {{#each-in this.heatmapRepo.simpleHeatGradient as |key val|}}
-    <div class="col-md-6 col-lg-4 col-xl-3 mt-3">
-            <div>Stop value: {{revert-key key '_' '.'}}</div>
-
-            {{!-- <div>{{value}}</div> --}}
-            <div id="{{concat "sh-gradient-" key}}" class="input-group">
-                <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.simpleHeatGradient key)}}/>
-            </div>
-    </div>
-    {{else}}
-    ERR: Gradient is empty.
-    {{/each-in}}
-    </div>
-
-    <h4 class="mt-5">Array Heatmap configuration</h4>
-
-    <div class="row">
-    {{#each-in this.heatmapRepo.arrayHeatGradient as |key val|}}
-    <div class="col-md-6 col-lg-4 col-xl-3 mt-3">
-            <div>Stop value: {{revert-key key '_' '.'}}</div>
-
-            {{!-- <div>{{value}}</div> --}}
-            <div id="{{concat "sh-gradient-" key}}" class="input-group">
-                <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.arrayHeatGradient key)}}/>
-            </div>
-    </div>
-    {{else}}
-    ERR: Gradient is empty.
-    {{/each-in}}
-    </div>
 
 </div>
