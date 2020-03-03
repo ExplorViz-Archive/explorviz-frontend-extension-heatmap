@@ -42,4 +42,38 @@
       <strong>{{option}}</strong>
     {{/power-select}}
 
+    <h4 class="mt-5">Simpleheat configuration</h4>
+    
+    <div class="row">
+    {{#each-in this.heatmapRepo.simpleHeatGradient as |key val|}}
+    <div class="col-md-6 col-lg-4 col-xl-3 mt-3">
+            <div>Stop value: {{revert-key key '_' '.'}}</div>
+
+            {{!-- <div>{{value}}</div> --}}
+            <div id="{{concat "sh-gradient-" key}}" class="input-group">
+                <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.simpleHeatGradient key)}}/>
+            </div>
+    </div>
+    {{else}}
+    ERR: Gradient is empty.
+    {{/each-in}}
+    </div>
+
+    <h4 class="mt-5">Array Heatmap configuration</h4>
+
+    <div class="row">
+    {{#each-in this.heatmapRepo.arrayHeatGradient as |key val|}}
+    <div class="col-md-6 col-lg-4 col-xl-3 mt-3">
+            <div>Stop value: {{revert-key key '_' '.'}}</div>
+
+            {{!-- <div>{{value}}</div> --}}
+            <div id="{{concat "sh-gradient-" key}}" class="input-group">
+                <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.arrayHeatGradient key)}}/>
+            </div>
+    </div>
+    {{else}}
+    ERR: Gradient is empty.
+    {{/each-in}}
+    </div>
+
 </div>

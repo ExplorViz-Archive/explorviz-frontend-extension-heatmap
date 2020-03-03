@@ -2,6 +2,9 @@ import Service from '@ember/service';
 import { inject as service } from "@ember/service";
 import Evented from '@ember/object/evented';
 
+import simpleHeatHelper from "../../utils/simple-heatmap";
+import arrayHeatHelper from "../../utils/array-heatmap";
+
 import debugLogger from 'ember-debug-logger';
 
 export default class HeatmapRepository extends Service.extend(Evented) {
@@ -22,6 +25,9 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   useSimpleHeat = true;
   useHelperLines = true; 
 
+  simpleHeatGradient = simpleHeatHelper.getDefaultGradient();
+  arrayHeatGradient = arrayHeatHelper.getDefaultGradient();
+
   debug = debugLogger();
 
   triggerLatestHeatmapUpdate() {
@@ -39,15 +45,31 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   }
 
   computeClazzMetrics(applicationID) {
-    let selectedMap = this.get("latestHeatmaps")[this.get("selectedMode")];
-    let clazzMetrics = null;
-    if(this.get("selectedMetric") && applicationID) {
-      this.set("latestApplicationHeatmap", selectedMap.getApplicationMetric(applicationID, this.get("selectedMetric")));
-      clazzMetrics = this.get("latestApplicationHeatmap").getClassMetricValues();
-      this.set("latestClazzMetrics", clazzMetrics);
-      this.debug("Updated latest clazz metrics.")
+    if (this.get("latestHeatmaps")){
+      let selectedMap = this.get("latestHeatmaps")[this.get("selectedMode")];
+      let clazzMetrics = null;
+      if(this.get("selectedMetric") && applicationID) {
+        this.set("latestApplicationHeatmap", selectedMap.getApplicationMetric(applicationID, this.get("selectedMetric")));
+        clazzMetrics = this.get("latestApplicationHeatmap").getClassMetricValues();
+        this.set("latestClazzMetrics", clazzMetrics);
+        this.debug("Updated latest clazz metrics.")
+      }
+      return clazzMetrics;
     }
-    return clazzMetrics;
+  }
+
+  /**
+   * Return a gradient where the '_' character in the keys is replaced with '.'.
+   */
+  getSimpleHeatGradient(){
+    return simpleHeatHelper.revertKey(this.get("simpleHeatGradient"));
+  }
+
+  /**
+   * Return a gradient where the '_' character in the keys is replaced with '.'.
+   */
+  getArrayHeatGradient(){
+    return arrayHeatHelper.revertKey(this.get("arrayHeatGradient"));
   }
 
 

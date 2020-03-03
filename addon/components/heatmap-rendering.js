@@ -1,6 +1,7 @@
 import layout from '../templates/components/heatmap-rendering';
 
-import arrayHeatmap from "../utils/array-heatmap";
+import arrayHeatHelper from "../utils/array-heatmap";
+import simpleHeatHelper from "../utils/simple-heatmap";
 import heatmapGen from "../utils/heatmap-generator";
 import clazzHelper from "../utils/clazz-helper";
 
@@ -8,7 +9,7 @@ import { inject as service } from '@ember/service';
 import { getOwner } from '@ember/application';
 import debugLogger from 'ember-debug-logger';
 
-import simpleheat from 'simpleheat';
+// import simpleheat from 'simpleheat';
 import THREE from 'three';
 
 import RenderingCore from 
@@ -635,56 +636,40 @@ export default RenderingCore.extend({
 
   applyHeatmap(clazzList){
     let useSimpleHeat = this.get('useSimpleHeat');
-    let useArrayHeat = !useSimpleHeat;
 
+    // TODO: calculate usable maximum value
     let maximumValue = 200;
 
+    let colorMap;
+    let depthOffset;
     let simpleHeatMap;
     let canvas;
     let foundationWidth = this.get('foundationMesh.geometry.parameters.width');
     let foundationDepth = this.get('foundationMesh.geometry.parameters.depth');
-    if (useSimpleHeat) {
+    if (!useSimpleHeat) { 
+      let depthSegments = this.get("foundationMesh.userData.depthSegments");
+      let widthSegments = this.get('foundationMesh.userData.widthSegments');
+      // The number of faces at front and back of the foundation mesh, i.e. the starting index for the faces on top.
+      depthOffset = depthSegments * 4;
+      // Compute face numbers of top side of the cube 
+      let size = widthSegments * depthSegments * 2;
+      // Prepare color map with same size as the surface of the foundation topside
+      colorMap = new Array(size).fill(0);
+    } else {
       canvas = document.createElement('canvas');
       canvas.width = foundationWidth;
       canvas.height = foundationDepth;
-      simpleHeatMap = simpleheat(canvas);
-      simpleHeatMap.radius(3, 2);
-      simpleHeatMap.max(maximumValue);
-      simpleHeatMap.gradient({
-        0.15: "rgb(0, 0, 255)",
-        0.25: "rgb(0, 255, 255)",
-        0.35: "rgb(0, 255, 100)",
-        0.45: "rgb(0, 255, 0)",
-        0.55: "rgb(175, 255, 0)",
-        0.65: "rgb(255, 255, 0)",
-        0.75: "rgb(255, 125, 0)",
-        0.85: "rgb(255, 75, 0)",
-        1.00: "rgb(255, 0, 0)"
-      });
+      simpleHeatMap = simpleHeatHelper.simpleHeatmap(maximumValue, canvas, this.get('heatmapRepo').getSimpleHeatGradient());
     }
-    // let camera = this.get('camera');
-    // var helper = new THREE.CameraHelper(camera);
-    // this.get('application3D').add(helper)
     
     // Create viewpoint from which the faces of the foundation are computed for each clazz. 
     let viewPos = this.get("foundationMesh.position").clone();
     viewPos.y = Math.max(this.get('camera').position.z * 0.8, 100);
-    // viewPos.z += this.get("foundationMesh.geometry.parameters.depth") * 0.1;
     viewPos.x -= foundationWidth * 0.25;
     let raycaster = new THREE.Raycaster();
 
-
-    let depthSegments = this.get("foundationMesh.userData.depthSegments");
-    let widthSegments = this.get('foundationMesh.userData.widthSegments');
-    // The number of faces at front and back of the foundation mesh, i.e. the starting index for the faces on top.
-    let depthOffset = depthSegments * 4;
-    // Compute face numbers of top side of the cube 
-    let size = widthSegments * depthSegments * 2;
-    // Prepare color map with same size as the surface of the foundation topside
-    let colorMap = new Array(size).fill(0);
-
     const heatmap = this.get("clazzMetrics"); 
-    const minmax = heatmapGen.computeHeatmapMinMax(heatmap);
+    const minmax = heatmapGen.computeHeatmapMinMax(heatmap, maximumValue);
     this.debug(`Metric min: ${minmax.min}, max: ${minmax.max}`)
 
     const selectedMode = this.get('heatmapRepo.selectedMode');
@@ -718,15 +703,15 @@ export default RenderingCore.extend({
 
       // Compute color only for the first intersection point for consistency if one was found.
       if (firstIntersection){
-        if (useArrayHeat) {
+        if (!useSimpleHeat) {
 
           if (selectedMode === "aggregatedHeatmap") {
-            arrayHeatmap.setColorValues(firstIntersection.faceIndex - depthOffset, 
-              heatmap.get(clazz.fullQualifiedName)-100, 
+            arrayHeatHelper.setColorValues(firstIntersection.faceIndex - depthOffset, 
+              heatmap.get(clazz.fullQualifiedName)-(maximumValue/2), 
               colorMap, 
               this.get('foundationMesh'));
           }else {
-            arrayHeatmap.setColorValues(firstIntersection.faceIndex - depthOffset, 
+            arrayHeatHelper.setColorValues(firstIntersection.faceIndex - depthOffset, 
               heatmap.get(clazz.fullQualifiedName), 
               colorMap, 
               this.get('foundationMesh'));
@@ -734,20 +719,17 @@ export default RenderingCore.extend({
         } else if (useSimpleHeat) {
           let xPos =  this.get('centerAndZoomCalculator.centerPoint.x')/2 + firstIntersection.point.x;
           let zPos =  this.get('centerAndZoomCalculator.centerPoint.z')/2 + firstIntersection.point.z;
-
           if (selectedMode === "aggregatedHeatmap") {
             simpleHeatMap.add([xPos, zPos, heatmap.get(clazz.fullQualifiedName)]);
           }else {
-            simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+100)]);
+            simpleHeatMap.add([xPos, zPos, (heatmap.get(clazz.fullQualifiedName)+(maximumValue/2))]);
           }
-
-
         }
       }
     });
 
-    if (useArrayHeat) {
-      arrayHeatmap.invokeRecoloring(colorMap, this.get('foundationMesh'), maximumValue);
+    if (!useSimpleHeat) {
+      arrayHeatHelper.invokeRecoloring(colorMap, this.get('foundationMesh'), maximumValue, this.get('heatmapRepo.arrayHeatGradient'));
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material[2].emissiveMap = new THREE.CanvasTexture(canvas);
