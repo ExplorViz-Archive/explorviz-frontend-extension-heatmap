@@ -4,6 +4,7 @@ import Evented from '@ember/object/evented';
 
 import simpleHeatHelper from "../../utils/simple-heatmap";
 import arrayHeatHelper from "../../utils/array-heatmap";
+import heatmapGenerator from "../../utils/heatmap-generator";
 
 import debugLogger from 'ember-debug-logger';
 
@@ -11,6 +12,10 @@ export default class HeatmapRepository extends Service.extend(Evented) {
 
   @service('repos/landscape-repository') landscapeRepo;
   
+  // Switch for the legend
+  legendActive = true;
+
+  // Heatmap data for rendering 
   latestHeatmaps = null;
   latestApplicationHeatmap = null;
   latestClazzMetrics = null;
@@ -20,11 +25,10 @@ export default class HeatmapRepository extends Service.extend(Evented) {
 
   applicationID = null;
 
-  // Switches used by config
+  // Switches and models used by config
   selectedMode = "aggregatedHeatmap";
   useSimpleHeat = true;
   useHelperLines = true; 
-
   simpleHeatGradient = simpleHeatHelper.getDefaultGradient();
   arrayHeatGradient = arrayHeatHelper.getDefaultGradient();
 
@@ -42,6 +46,10 @@ export default class HeatmapRepository extends Service.extend(Evented) {
 
   triggerConfigChanged() {
     this.trigger("configChanged")
+  }
+
+  toggleLegend() {
+    this.set("legendActive", !this.get("legendActive"));
   }
 
   computeClazzMetrics(applicationID) {
@@ -62,14 +70,14 @@ export default class HeatmapRepository extends Service.extend(Evented) {
    * Return a gradient where the '_' character in the keys is replaced with '.'.
    */
   getSimpleHeatGradient(){
-    return simpleHeatHelper.revertKey(this.get("simpleHeatGradient"));
+    return heatmapGenerator.revertKey(this.get("simpleHeatGradient"));
   }
 
   /**
    * Return a gradient where the '_' character in the keys is replaced with '.'.
    */
   getArrayHeatGradient(){
-    return arrayHeatHelper.revertKey(this.get("arrayHeatGradient"));
+    return heatmapGenerator.revertKey(this.get("arrayHeatGradient"));
   }
 
 

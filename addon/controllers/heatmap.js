@@ -37,6 +37,11 @@ export default class HeatmapController extends Controller.extend({
   get showLandscape() {
     return (!get(this, 'landscapeRepo.latestApplication')) || (!get(this, 'heatmapRepo.metrics'));
   }
+  
+  @computed('heatmapRepo.legendActive')
+  get showLegend(){
+    return get(this, 'heatmapRepo.legendActive');
+  }
 
   @action
   resize() {
@@ -58,6 +63,11 @@ export default class HeatmapController extends Controller.extend({
   @action
   toggleTimeline() {
     get(this, 'renderingService').toggleTimeline();
+  }
+
+  @action 
+  toggleLegend(){
+    get(this, 'heatmapRepo').toggleLegend();
   }
 
   @action

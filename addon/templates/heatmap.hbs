@@ -40,10 +40,18 @@
       }}
     <div id="rendering">
       <div style="position: absolute!important" class="pl-1">
-        {{#bs-button onClick=(action "openLandscapeView") type="secondary" outline=true title="Back to Landscape"}}
-        {{svg-jar "reply" class="octicon align-middle"}}
-        {{/bs-button}}
+        <BsButtonGroup @vertical=true as |bg|>
+          {{#bs-button onClick=(action "openLandscapeView") type="secondary" outline=true title="Back to Landscape"}}
+          {{svg-jar "reply" class="octicon align-middle"}}
+          {{/bs-button}}
+          {{#bs-button onClick=(action "toggleLegend") type="secondary" outline=true title="Toggle Legend"}}
+          {{svg-jar "unfold" class="octicon align-middle"}}
+          {{/bs-button}}
+        </BsButtonGroup>
       </div>
+      {{#if showLegend}}
+        {{heatmap-legend}}
+      {{/if}}
       {{heatmap-rendering latestApplication=landscapeRepo.latestApplication latestHeatmap=heatmapRepo.lastestHeatmap}}
       <!-- popup(s) -->
       {{visualization/rendering/popups/popup-coordinator

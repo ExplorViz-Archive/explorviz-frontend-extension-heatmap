@@ -17,7 +17,7 @@
           matchTriggerWidth=false
           as |heatmapMode|
         }}
-          <strong>{{heatmapMode.name}}</strong>
+          {{heatmapMode.name}}
         {{/power-select}}
         </div>
       </div>
@@ -44,7 +44,7 @@
     <div class="pl-3">
       <div class="d-flex justify-content-between pr-3">
         <div>
-          Use helper lines
+          Show helper lines
           <HelpTooltipRight @title={{this.descriptions.helperLines}} />
         </div>
         <XToggle

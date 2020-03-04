@@ -1,0 +1,9 @@
+#heatmap-legend {
+  position: absolute; 
+  right: 0%;
+  top:15%; 
+  width:100px; 
+  height:400px; 
+  max-height: 50%; 
+  border: 2px solid #000000
+}

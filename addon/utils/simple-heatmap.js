@@ -2,7 +2,8 @@ import simpleheat from 'simpleheat';
 
 export function getDefaultGradient() {
   return {
-    "0_15": "rgb(0, 0, 255)",
+    "0_00": "rgb(0, 0, 255)",
+    "0_15": "rgb(0, 153, 255)",
     "0_25": "rgb(0, 255, 255)",
     "0_35": "rgb(0, 255, 100)",
     "0_45": "rgb(0, 255, 0)",
@@ -20,18 +21,4 @@ export function simpleHeatmap(maximumValue, canvas, gradient) {
   simpleHeatMap.max(maximumValue);
   simpleHeatMap.gradient(gradient);
   return simpleHeatMap;
-}
-
-export function normalizeKey(gradient){
-  let replacedItems = Object.keys(gradient).map((key) => {
-    return {[key.replace(/\./g,'_')]: gradient[key]}
-  })
-  return Object.assign({}, ...replacedItems);
-}
-
-export function revertKey(gradient){
-  let replacedItems = Object.keys(gradient).map((key) => {
-    return {[key.replace(/_/g,'.')]: gradient[key]}
-  })
-  return Object.assign({}, ...replacedItems);
 }

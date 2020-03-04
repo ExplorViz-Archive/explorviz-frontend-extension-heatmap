@@ -26,3 +26,10 @@ export function computeHeatmapMinMax(map, maxValue) {
   }
   return {"min": min, "max": max}
 }
+
+export function revertKey(gradient){
+  let replacedItems = Object.keys(gradient).map((key) => {
+    return {[key.replace(/_/g,'.').replace(/\+/g, '')]: gradient[key]}
+  })
+  return Object.assign({}, ...replacedItems);
+}

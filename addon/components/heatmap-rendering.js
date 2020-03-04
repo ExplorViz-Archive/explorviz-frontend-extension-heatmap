@@ -729,7 +729,7 @@ export default RenderingCore.extend({
     });
 
     if (!useSimpleHeat) {
-      arrayHeatHelper.invokeRecoloring(colorMap, this.get('foundationMesh'), maximumValue, this.get('heatmapRepo.arrayHeatGradient'));
+      arrayHeatHelper.invokeRecoloring(colorMap, this.get('foundationMesh'), maximumValue, this.heatmapRepo.getArrayHeatGradient());
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material[2].emissiveMap = new THREE.CanvasTexture(canvas);

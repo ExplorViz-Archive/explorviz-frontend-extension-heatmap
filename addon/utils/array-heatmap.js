@@ -8,7 +8,7 @@ export function getDefaultGradient() {
     "0_15": "rgb(255, 255, 0)",
     "0_25": "rgb(255, 162, 0)",
     "0_35": "rgb(255, 98, 0)",
-    "max": "rgb(255, 0, 0)"
+    "0_50+": "rgb(255, 0, 0)"
   };
 }
 
@@ -115,27 +115,25 @@ export function computeGradient(requestedValue, maximumValue, gradient) {
     gradientValue = requestedValue/maximumValue;
   }
 
-  // console.log(gradient)
   if (gradientValue <= -0.35) { //-* - -35
-    val = gradient["-0_35"];
+    val = gradient["-0.35"];
   } else if (gradientValue <= -0.25) { //-34 - -25
-    val = gradient["-0_25"];
+    val = gradient["-0.25"];
   } else if (gradientValue <= -0.15) { //-26 - -15
-    val = gradient["-0_15"];
+    val = gradient["-0.15"];
   }else if (gradientValue <= -0.05) { //-14 - -5
-    val = gradient["-0_05"];
+    val = gradient["-0.05"];
   } else if (gradientValue <= 0.05) { //-6 - 5
-    val = gradient["0_05"];
+    val = gradient["0.05"];
   }else if (gradientValue <= 0.15) { //6 - 15
-    val = gradient["0_15"];
+    val = gradient["0.15"];
   } else if (gradientValue <= 0.25) { // 14 - 25
-    val = gradient["0_25"];
+    val = gradient["0.25"];
   } else if (gradientValue <= 0.35) { // 26 - 35
-    val = gradient["0_35"];
+    val = gradient["0.35"];
   } else {  // 36 - * 
-    val = gradient["max"];
+    val = gradient["0.50"];
   } 
 
-  // console.log(val);
   return val;
 }
