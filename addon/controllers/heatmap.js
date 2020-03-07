@@ -1,17 +1,21 @@
 import Controller from '@ember/controller';
 import {inject as service} from '@ember/service';
-import { computed, action, get, set, observer } from '@ember/object';
+import { computed, action, get, set} from '@ember/object';
 
 export default class HeatmapController extends Controller.extend({
 
   // eslint-disable-next-line ember/no-observers
-  timelineResetObserver: observer('landscapeListener.pauseVisualizationReload', function() {
-    // reset highlighting and selection in timeline, if unpause was clicked
-    if(!get(this, "landscapeListener.pauseVisualizationReload")) {
-      set(this, "selectedTimestampRecords", []);
-      get(this, 'plotlyTimelineRef').resetHighlighting();
-    }
-  })
+  // timelineResetObserver: observer('landscapeListener.pauseVisualizationReload', function() {
+  //   // reset highlighting and selection in timeline, if unpause was clicked
+  //   if(!get(this, "landscapeListener.pauseVisualizationReload")) {
+  //     set(this, "selectedTimestampRecords", []);
+  //     // Manually resetting selected timestamps on timeline as resetHighlighting throws error
+  //     if (get(this, 'plotlyTimelineRef._selectedTimestamps')){
+  //       set(this, 'plotlyTimelineRef._selectedTimestamps', []);
+  //       get(this, 'plotlyTimelineRef').resetHighlighting();
+  //     }
+  //   }
+  // })
 
 }) 
 {
@@ -30,7 +34,6 @@ export default class HeatmapController extends Controller.extend({
   type = 'heatmap';
 
   plotlyTimelineRef = null;
-
   selectedTimestampRecords = [];
 
   @computed('landscapeRepo.latestApplication', 'heatmapRepo.metrics')
@@ -41,6 +44,15 @@ export default class HeatmapController extends Controller.extend({
   @computed('heatmapRepo.legendActive')
   get showLegend(){
     return get(this, 'heatmapRepo.legendActive');
+  }
+
+  @computed('landscapeRepo.latestLandscape.systems', 'heatmapRepo.latestHeatmaps')
+  get showSystems(){
+    let systems = this.get('landscapeRepo.latestLandscape.systems');
+    if (systems) {
+      return (systems.get('firstObject') && get(this, 'heatmapRepo.latestHeatmaps.landscapeId'));
+    }
+    return false;
   }
 
   @action
@@ -95,8 +107,18 @@ export default class HeatmapController extends Controller.extend({
     get(this, 'heatmapListener').initSSE();
   }
 
-  // @Override
-  cleanup() {
-    this._super(...arguments);
+  init() {
+    super.init(...arguments);
+    this.addObserver('landscapeListener.pauseVisualizationReload', function() {
+      // reset highlighting and selection in timeline, if unpause was clicked
+      if(!get(this, "landscapeListener.pauseVisualizationReload")) {
+        set(this, "selectedTimestampRecords", []);
+        // Manually resetting selected timestamps on timeline as resetHighlighting throws error
+        if (get(this, 'plotlyTimelineRef._selectedTimestamps')){
+          set(this, 'plotlyTimelineRef._selectedTimestamps', []);
+          get(this, 'plotlyTimelineRef').resetHighlighting();
+        }
+      }
+    })
   }
 }

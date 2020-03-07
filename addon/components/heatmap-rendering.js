@@ -521,10 +521,9 @@ export default RenderingCore.extend({
     let opacityValue = 1.0;
 
     // Override transparency for heatmap mode
-    // TODO: bind to heatmap button?
     if (!boxEntity.get('foundation') && !isClazz) {
       transparent = true;
-      opacityValue = 0.05;
+      opacityValue = this.get('heatmapRepo.opacityValue');
     }
     
     let material ;
@@ -538,7 +537,7 @@ export default RenderingCore.extend({
         new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
         new THREE.MeshLambertMaterial({color: new THREE.Color(color)})
       ]
-      // TODO: Hacky way to disable hoverHandler without throwing error
+      // Hacky way to disable hoverHandler without throwing error
       material.color = new THREE.Color(color);
     } else {
       material= new THREE.MeshLambertMaterial({
@@ -559,7 +558,6 @@ export default RenderingCore.extend({
     let segmentScalar = 0.33
     let widthSegments = Math.floor(extension.x * segmentScalar)
     let depthSegments = Math.floor(extension.z * segmentScalar)
-    // TODO: Add choice of optional array heatmap vs. simple heatmap
     if (boxEntity.get('foundation') && !this.get('useSimpleHeat')) {
       // Enable face colors for the foundation to set color of individual segments
       material.vertexColors = THREE.FaceColors;
@@ -638,7 +636,7 @@ export default RenderingCore.extend({
     let useSimpleHeat = this.get('useSimpleHeat');
 
     // TODO: calculate usable maximum value
-    let maximumValue = 200;
+    let maximumValue = 175;
 
     let colorMap;
     let depthOffset;
@@ -669,7 +667,7 @@ export default RenderingCore.extend({
     let raycaster = new THREE.Raycaster();
 
     const heatmap = this.get("clazzMetrics"); 
-    const minmax = heatmapGen.computeHeatmapMinMax(heatmap, maximumValue);
+    const minmax = heatmapGen.computeHeatmapMinMax(heatmap);
     this.debug(`Metric min: ${minmax.min}, max: ${minmax.max}`)
 
     const selectedMode = this.get('heatmapRepo.selectedMode');
@@ -733,8 +731,8 @@ export default RenderingCore.extend({
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material[2].emissiveMap = new THREE.CanvasTexture(canvas);
-      this.get("foundationMesh").material[2].emissive = new THREE.Color("rgb(199, 199, 199)");
-      this.get("foundationMesh").material[2].emissiveIntensity = 1;
+      this.get("foundationMesh").material[2].emissive = new THREE.Color("rgb(50, 50, 50)");
+      this.get("foundationMesh").material[2].emissiveIntensity = 2;
       this.get("foundationMesh").material[2].needsUpdate = true;
       canvas = null;
       simpleHeatMap = null;

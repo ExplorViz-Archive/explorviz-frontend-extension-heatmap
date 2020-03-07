@@ -1,16 +1,30 @@
+import { getOwner } from '@ember/application';
 import Service from '@ember/service';
 import { inject as service } from "@ember/service";
 import Evented from '@ember/object/evented';
+import {set} from '@ember/object';
 
 import simpleHeatHelper from "../../utils/simple-heatmap";
 import arrayHeatHelper from "../../utils/array-heatmap";
 import heatmapGenerator from "../../utils/heatmap-generator";
+
+import ModelUpdater from 'explorviz-frontend/utils/model-update';
+import AlertifyHandler from 'explorviz-frontend/utils/alertify-handler';
 
 import debugLogger from 'ember-debug-logger';
 
 export default class HeatmapRepository extends Service.extend(Evented) {
 
   @service('repos/landscape-repository') landscapeRepo;
+  @service('store') store;
+  modelUpdater = null;
+
+  constructor() {
+    super(...arguments);
+    if (!this.modelUpdater) {
+      set(this, 'modelUpdater', ModelUpdater.create(getOwner(this).ownerInjection()));
+    }
+  }
   
   // Switch for the legend
   legendActive = true;
@@ -29,8 +43,10 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   selectedMode = "aggregatedHeatmap";
   useSimpleHeat = true;
   useHelperLines = true; 
+  opacityValue = 0.10;
   simpleHeatGradient = simpleHeatHelper.getDefaultGradient();
   arrayHeatGradient = arrayHeatHelper.getDefaultGradient();
+
 
   debug = debugLogger();
 
@@ -67,6 +83,30 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   }
 
   /**
+   * Update the latest heatmap entry and trigger update.
+   * @param {*} heatmap 
+   */
+  updateLatestHeatmap(heatmap) {
+    
+    heatmap.get('aggregatedHeatmap').then((aggMap)=>{
+      heatmap.get('windowedHeatmap').then((windMap)=>{
+        this.set('latestHeatmaps', {"landscapeId": heatmap.landscapeId,"aggregatedHeatmap": aggMap, "windowedHeatmap": windMap});
+        if (heatmap.landscapeId === this.get('landscapeRepo.latestLandscape.id')) {
+          // console.log(`${this.get('heatmap.landscapeId')} | ${this.get('landscapeRepo.latestLandscape.id')} | ${this.get('heatmap.landscapeId') === this.get('landscapeRepo.latestLandscape.id')}` )
+          this.triggerLatestHeatmapUpdate();
+        } else {
+          this.debug("Landscape and heatmap ids do not match. Requesting new landscape...")
+          //TODO: request new landscape ...
+
+          this.requestLandscape(heatmap.timestamp);
+          this.triggerLatestHeatmapUpdate();
+        }
+      })
+    })
+  }
+
+
+  /**
    * Return a gradient where the '_' character in the keys is replaced with '.'.
    */
   getSimpleHeatGradient(){
@@ -80,6 +120,34 @@ export default class HeatmapRepository extends Service.extend(Evented) {
     return heatmapGenerator.revertKey(this.get("arrayHeatGradient"));
   }
 
+  requestLandscape(timestamp) {
+    const self = this;
+
+    self.debug("Start import landscape-request");
+    self.store.queryRecord('landscape', { timestamp: timestamp }).then(success, failure).catch(error);
+
+    function success(landscape) {
+      self.modelUpdater.addDrawableCommunication();
+      set(self.landscapeRepo, 'latestLandscape', landscape);
+      self.landscapeRepo.triggerLatestLandscapeUpdate();
+      self.debug("end import landscape-request");
+      self.triggerLatestHeatmapUpdate();
+    }
+
+    function failure(e){
+      self.cleanup();
+      set(self.landscapeRepo, 'latestLandscape', null);
+      AlertifyHandler.showAlertifyMessage("Model couldn't be requested!" +
+        " Backend offline?");
+      self.debug("Model couldn't be requested!", e);
+    }
+  
+    function error(e) {
+      self.cleanup();
+      set(self.landscapeRepo, 'latestLandscape', null);
+      self.debug("Error when fetching model: ", e);
+    }
+  }
 
   /**
    * Reset all class attribute values to null;

@@ -5,11 +5,11 @@ import { inject as service } from "@ember/service";
 import Evented from '@ember/object/evented';
 // import ModelUpdater from 'explorviz-frontend/utils/model-update';
 import debugLogger from 'ember-debug-logger';
-import { set } from '@ember/object';
+import { set, computed } from '@ember/object';
 
 /*global EventSourcePolyfill*/
-export default class HeatmapListener extends Service.extend(Evented) {
-
+export default class HeatmapListener extends Service.extend(Evented
+){
   // https://github.com/segmentio/sse/blob/master/index.js
 
   @service('session') session;
@@ -18,24 +18,14 @@ export default class HeatmapListener extends Service.extend(Evented) {
   @service('repos/heatmap-repository') heatmapRepo;
   @service('repos/landscape-repository') landscapeRepo;
   
-  latestJsonHeatmap = null;
-  
   es = null;
 
-  pauseVisualizationReload = false;
+  @computed('landscapeListener.pauseVisualizationReload')
+  get pauseVisualizationReload() {
+    return this.get('landscapeListener.pauseVisualizationReload');
+  }
 
   debug = debugLogger();
-
-  init() {
-    super.init(...arguments);
-
-    /**
-     * Resume the visualization, when landscape listener is reactivated.
-     */
-    this.get('landscapeListener').on('visualizationResumed', () => {
-      this.startVisualizationReload();
-    });
-  }
 
   initSSE() {
     set(this, 'content', []);
@@ -64,9 +54,8 @@ export default class HeatmapListener extends Service.extend(Evented) {
       
       if (jsonHeatmap && jsonHeatmap.hasOwnProperty('data')) {
         
-        this.debug(`Received Heatmap ${jsonHeatmap.data.id} for landscape ${jsonHeatmap.data.attributes.landscapeId}.`)
+        this.debug(`Received new Heatmap.`)
         if (!this.pauseVisualizationReload) {
-          set(this, 'latestJsonHeatmap', jsonHeatmap);
           const heatmapRecord = this.store.push(jsonHeatmap);
   
           // Register the metrics the first time they are pushed.
@@ -86,13 +75,7 @@ export default class HeatmapListener extends Service.extend(Evented) {
             this.debug("Updated metric list.")
           }
   
-          heatmapRecord.get('aggregatedHeatmap').then((aggMap)=>{
-            heatmapRecord.get('windowedHeatmap').then((windMap)=>{
-              set(this.heatmapRepo, 'latestHeatmaps', {"aggregatedHeatmap": aggMap, "windowedHeatmap": windMap});
-              this.heatmapRepo.triggerLatestHeatmapUpdate();
-            })
-          })
-
+          this.get('heatmapRepo').updateLatestHeatmap(heatmapRecord);
         } else {
             // visualization is paused
             this.debug("Visualization update paused");
@@ -115,21 +98,5 @@ export default class HeatmapListener extends Service.extend(Evented) {
     };
 
     return source.close.bind(source);
-  }
-
-  toggleVisualizationReload() {
-    if (this.pauseVisualizationReload) {
-      this.startVisualizationReload();
-    } else {
-      this.stopVisualizationReload();
-    }
-  }
-
-  startVisualizationReload() {
-    set(this, 'pauseVisualizationReload', false);
-  }
-
-  stopVisualizationReload() {
-    set(this, 'pauseVisualizationReload', true);
   }
 }

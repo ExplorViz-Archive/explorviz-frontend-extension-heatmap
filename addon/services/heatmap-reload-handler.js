@@ -1,5 +1,5 @@
 import { getOwner } from '@ember/application';
-import Evented from '@ember/object/evented'
+import Evented from '@ember/object/evented';
 import {set} from '@ember/object';
 import Service from '@ember/service';
 import {inject as service} from '@ember/service'
@@ -41,7 +41,6 @@ export default class HeatmapReloadHandler extends Service.extend(Evented){
     function success(landscape) {
       // Pause the visualization
       self.landscapeListener.stopVisualizationReload();
-      self.heatmapListener.stopVisualizationReload();
 
       self.modelUpdater.addDrawableCommunication();
       set(self.landscapeRepo, 'latestLandscape', landscape);
@@ -78,12 +77,7 @@ export default class HeatmapReloadHandler extends Service.extend(Evented){
     self.store.queryRecord('heatmap', {timestamp: timestamp}).then(success, failure).catch(error);
 
     function success(heatmap){
-      heatmap.get('aggregatedHeatmap').then((aggMap)=>{
-        heatmap.get('windowedHeatmap').then((windMap)=>{
-          set(self.heatmapRepo, 'latestHeatmaps', {"aggregatedHeatmap": aggMap, "windowedHeatmap": windMap});
-          self.heatmapRepo.triggerLatestHeatmapUpdate();
-        })
-      })
+      self.heatmapRepo.updateLatestHeatmap(heatmap);
       self.debug("End import heatmap-request")
     }
 

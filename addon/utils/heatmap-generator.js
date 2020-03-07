@@ -12,18 +12,9 @@ export function computeDummyHeatmap(clazzList) {
 
 
 // Compute the min and max values for the heatmap.
-export function computeHeatmapMinMax(map, maxValue) {
-  let min = maxValue;
-  let max = -maxValue;
-  if (map) {
-    map.forEach((value) => {
-      if (value < min) {
-        min = value;
-      } else if (value > max){
-        max = value;   
-      }
-    })
-  }
+export function computeHeatmapMinMax(map) {
+  let min = Math.min(...map.values());
+  let max = Math.max(...map.values());
   return {"min": min, "max": max}
 }
 

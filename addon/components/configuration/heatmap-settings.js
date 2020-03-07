@@ -12,6 +12,7 @@ export default Component.extend({
   selectedMode: null,
   shVisible: false,
   ahVisible: false,
+  opacityValue: null,
 
   init() {
     this._super(...arguments);
@@ -29,7 +30,8 @@ export default Component.extend({
       helperLines: "Show the helper lines to determine which point on the heatmap belongs to which class.",
       shGradient: "Configure the simple heat gradient. Use either rgb, hex or css-style format.",
       ahGradient: "Configure the array heat gradient. Use either rgb, hex or css-style format."
-        + " The first stop value that is true for a metric is used."
+        + " The first stop value that is true for a metric is used.",
+      opacityValue: "Set the opacity of the package boxes. Choose a value between 0 and 1.",
     };
 
   },
@@ -37,6 +39,7 @@ export default Component.extend({
   didReceiveAttrs(){
     this._super(...arguments);
     this.set('selectedMode', (this.get('heatmapRepo.selectedMode')==="aggregatedHeatmap")? this.heatmapModes[0] : this.heatmapModes[1]);
+    this.set('opacityValue', this.get('heatmapRepo.opacityValue'));
   },
 
   actions: {
@@ -45,6 +48,10 @@ export default Component.extend({
       this.set('selectedMode', mapMode);
       this.set('heatmapRepo.selectedMode', mapMode.id);
       this.get('heatmapRepo').triggerLatestHeatmapUpdate();
+    },
+
+    onRangeSettingChange(newValue) {
+      this.set('heatmapRepo.opacityValue', newValue);
     },
   },
 

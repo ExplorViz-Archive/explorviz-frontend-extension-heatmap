@@ -8,6 +8,7 @@
   searchEnabled=false
   matchTriggerWidth=false
   as |metric|}}
-    <strong>{{metric.name}}</strong>
+    {{capitalize metric.name}}
+    <HelpTooltipRight @title={{metric.description}}/>
   {{/power-select}}
 </li>

@@ -57,6 +57,24 @@
       </div>
     </div>
 
+    <div class="pl-3">
+      <div class="d-flex justify-content-between">
+        <div>
+          Set package opacity value
+          <HelpTooltipRight @title={{this.descriptions.opacityValue}} />
+        </div>
+        <BsForm model={{this}} as |form|>
+          <form.element
+            class="d-contents"
+            @controlType="number"
+            @step=".01"
+            @value={{opacityValue}}
+            @onChange={{action "onRangeSettingChange"}}
+          />
+        </BsForm>
+      </div>
+    </div>
+
 
     <div class="d-flex justify-content-between pr-3 mt-5">
       <div>
