@@ -23,7 +23,7 @@ export default Component.extend({
   didReceiveAttrs(){
     this._super(...arguments);
     this.set('metrics', this.get("heatmapRepository.metrics"));
-    this.set('choice', this.get('metrics')[0]);
+    this.set('choice', this.get('metrics')[4]);
     this.set('heatmapRepository.selectedMetric', this.get('choice.typeName'));
   },
 });

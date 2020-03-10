@@ -33,6 +33,7 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   latestHeatmaps = null;
   latestApplicationHeatmap = null;
   latestClazzMetrics = null;
+  largestValue = null;
 
   metrics = null;
   selectedMetric = null;
@@ -43,7 +44,7 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   selectedMode = "aggregatedHeatmap";
   useSimpleHeat = true;
   useHelperLines = true; 
-  opacityValue = 0.10;
+  opacityValue = 0.01;
   simpleHeatGradient = simpleHeatHelper.getDefaultGradient();
   arrayHeatGradient = arrayHeatHelper.getDefaultGradient();
 
@@ -76,6 +77,7 @@ export default class HeatmapRepository extends Service.extend(Evented) {
         this.set("latestApplicationHeatmap", selectedMap.getApplicationMetric(applicationID, this.get("selectedMetric")));
         clazzMetrics = this.get("latestApplicationHeatmap").getClassMetricValues();
         this.set("latestClazzMetrics", clazzMetrics);
+        this.set("largestValue", this.get("latestApplicationHeatmap.largestValue"));
         this.debug("Updated latest clazz metrics.")
       }
       return clazzMetrics;
@@ -92,12 +94,9 @@ export default class HeatmapRepository extends Service.extend(Evented) {
       heatmap.get('windowedHeatmap').then((windMap)=>{
         this.set('latestHeatmaps', {"landscapeId": heatmap.landscapeId,"aggregatedHeatmap": aggMap, "windowedHeatmap": windMap});
         if (heatmap.landscapeId === this.get('landscapeRepo.latestLandscape.id')) {
-          // console.log(`${this.get('heatmap.landscapeId')} | ${this.get('landscapeRepo.latestLandscape.id')} | ${this.get('heatmap.landscapeId') === this.get('landscapeRepo.latestLandscape.id')}` )
           this.triggerLatestHeatmapUpdate();
         } else {
           this.debug("Landscape and heatmap ids do not match. Requesting new landscape...")
-          //TODO: request new landscape ...
-
           this.requestLandscape(heatmap.timestamp);
           this.triggerLatestHeatmapUpdate();
         }
@@ -123,14 +122,12 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   requestLandscape(timestamp) {
     const self = this;
 
-    self.debug("Start import landscape-request");
     self.store.queryRecord('landscape', { timestamp: timestamp }).then(success, failure).catch(error);
 
     function success(landscape) {
       self.modelUpdater.addDrawableCommunication();
       set(self.landscapeRepo, 'latestLandscape', landscape);
       self.landscapeRepo.triggerLatestLandscapeUpdate();
-      self.debug("end import landscape-request");
       self.triggerLatestHeatmapUpdate();
     }
 
@@ -159,6 +156,7 @@ export default class HeatmapRepository extends Service.extend(Evented) {
     this.set("selectedMetric", null);
     this.set("applicationID", null);
     this.set("metrics", null);
+    this.set("largestValue", null);
   }
 
 }

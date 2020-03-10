@@ -635,8 +635,8 @@ export default RenderingCore.extend({
   applyHeatmap(clazzList){
     let useSimpleHeat = this.get('useSimpleHeat');
 
-    // TODO: calculate usable maximum value
-    let maximumValue = 175;
+    // Get max and add 1 to avoid -0 issues. 
+    let maximumValue = this.get("heatmapRepo.largestValue")+1;
 
     let colorMap;
     let depthOffset;
@@ -668,7 +668,7 @@ export default RenderingCore.extend({
 
     const heatmap = this.get("clazzMetrics"); 
     const minmax = heatmapGen.computeHeatmapMinMax(heatmap);
-    this.debug(`Metric min: ${minmax.min}, max: ${minmax.max}`)
+    this.debug(`Heatmap max: ${maximumValue} | Clazz min: ${minmax.min}, max: ${minmax.max}`);
 
     const selectedMode = this.get('heatmapRepo.selectedMode');
 
