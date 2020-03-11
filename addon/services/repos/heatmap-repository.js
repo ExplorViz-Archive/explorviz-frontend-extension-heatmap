@@ -44,7 +44,8 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   selectedMode = "aggregatedHeatmap";
   useSimpleHeat = true;
   useHelperLines = true; 
-  opacityValue = 0.01;
+  opacityValue = 0.05;
+  showLegendValues = true;
   simpleHeatGradient = simpleHeatHelper.getDefaultGradient();
   arrayHeatGradient = arrayHeatHelper.getDefaultGradient();
 
@@ -117,6 +118,20 @@ export default class HeatmapRepository extends Service.extend(Evented) {
    */
   getArrayHeatGradient(){
     return heatmapGenerator.revertKey(this.get("arrayHeatGradient"));
+  }
+
+  /**
+   * Reset the gradient to default values.
+   */
+  resetSimpleHeatGradient(){
+    this.set("simpleHeatGradient", simpleHeatHelper.getDefaultGradient());
+  }
+
+  /**
+   * Reset the gradient to default values.
+   */
+  resetArrayHeatGradient(){
+    this.set("arrayHeatGradient", arrayHeatHelper.getDefaultGradient());
   }
 
   requestLandscape(timestamp) {

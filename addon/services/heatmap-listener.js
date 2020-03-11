@@ -56,6 +56,8 @@ export default class HeatmapListener extends Service.extend(Evented
         
         this.debug(`Received new Heatmap.`)
         if (!this.pauseVisualizationReload) {
+
+          
           const heatmapRecord = this.store.push(jsonHeatmap);
   
           // Register the metrics the first time they are pushed.

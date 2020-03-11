@@ -738,7 +738,7 @@ export default RenderingCore.extend({
       simpleHeatMap = null;
     }
 
-    this.debug(`Applied new ${selectedMode} for ${this.get("heatmapRepo.selectedMetric")}.`);
+    // this.debug(`Applied new ${selectedMode} for ${this.get("heatmapRepo.selectedMetric")}.`);
   }, // END applyHeatmap
 
 

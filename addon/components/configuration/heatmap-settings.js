@@ -29,9 +29,9 @@ export default Component.extend({
       visualizationMode: "Use a heatmap visualized with simpleheat or an array based heatmap.",
       helperLines: "Show the helper lines to determine which point on the heatmap belongs to which class.",
       shGradient: "Configure the simple heat gradient. Use either rgb, hex or css-style format.",
-      ahGradient: "Configure the array heat gradient. Use either rgb, hex or css-style format."
-        + " The first stop value that is true for a metric is used.",
+      ahGradient: "Configure the array heat gradient. Use either rgb, hex or css-style format.",
       opacityValue: "Set the opacity of the package boxes. Choose a value between 0 and 1.",
+      showLegendValues: "Select wether the raw heatmap values or their abstractions should be shown as label.",
     };
 
   },
@@ -52,6 +52,14 @@ export default Component.extend({
 
     onRangeSettingChange(newValue) {
       this.set('heatmapRepo.opacityValue', newValue);
+    },
+
+    resetSimpleHeatGradient() {
+      this.get('heatmapRepo').resetSimpleHeatGradient();
+    },
+
+    resetArrayHeatGradient() {
+      this.get('heatmapRepo').resetArrayHeatGradient();
     },
   },
 

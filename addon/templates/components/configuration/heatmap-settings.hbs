@@ -57,7 +57,7 @@
       </div>
     </div>
 
-    <div class="pl-3">
+    <div class="pl-3 py-2">
       <div class="d-flex justify-content-between">
         <div>
           Set package opacity value
@@ -75,6 +75,22 @@
       </div>
     </div>
 
+    <div class="pl-3">
+      <div class="d-flex justify-content-between pr-3">
+        <div>
+          Show legend values
+          <HelpTooltipRight @title={{this.descriptions.showLegendValues}} />
+        </div>
+        <XToggle
+          @theme='skewed'
+          @onLabel='Yes'
+          @offLabel='No'
+          @value={{get this.heatmapRepo "showLegendValues"}}
+          @onToggle={{action (mut (get this.heatmapRepo "showLegendValues"))}}
+        />
+      </div>
+    </div>
+
 
     <div class="d-flex justify-content-between pr-3 mt-5">
       <div>
@@ -89,20 +105,25 @@
       />
     </div>
     {{#if this.shVisible}}
-      <div class="row">
-        {{#each-in this.heatmapRepo.simpleHeatGradient as |key val|}}
-          <div class="col-md-4 col-lg-2 col-xl-2 mt-3">
-            <div>
-              Stop value: {{revert-key key '_' '.'}}
-            </div>
-            <div id="{{concat "sh-gradient-" key}}" class="input-group">
-              <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.simpleHeatGradient key)}}/>
-            </div>
+    <div class="row mb-1 pr-3">
+      {{#each-in this.heatmapRepo.simpleHeatGradient as |key val|}}
+        <div class="col-md-4 col-lg-2 col-xl-2 mt-3">
+          <div>
+            Stop value: {{revert-key key '_' '.'}}
           </div>
-        {{else}}
-          ERR: Gradient is empty.
-        {{/each-in}}
-      </div>
+          <div id="{{concat "sh-gradient-" key}}" class="input-group">
+            <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.simpleHeatGradient key)}}/>
+          </div>
+        </div>
+      {{else}}
+        ERR: Gradient is empty.
+      {{/each-in}}
+    </div>
+    <div class="d-flex justify-content-end pr-3">
+      {{#bs-button type="primary" onClick=(action "resetSimpleHeatGradient") class="float-right"}}
+        Reset to default
+      {{/bs-button}}
+    </div>
     {{/if}}
 
     <div class="d-flex justify-content-between pr-3 mt-5">
@@ -119,20 +140,25 @@
       />
     </div>
     {{#if this.ahVisible}}
-      <div class="row">
-        {{#each-in this.heatmapRepo.arrayHeatGradient as |key val|}}
-          <div class="col-md-4 col-lg-2 col-xl-2 mt-3">
-            <div>
-              Stop value: {{revert-key key '_' '.'}}
-            </div>
-            <div id="{{concat "ah-gradient-" key}}" class="input-group">
-              <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.arrayHeatGradient key)}}/>
-            </div>
+    <div class="row">
+      {{#each-in this.heatmapRepo.arrayHeatGradient as |key val|}}
+        <div class="col-md-4 col-lg-2 col-xl-2 mt-3">
+          <div>
+            Stop value: {{revert-key key '_' '.'}}
           </div>
-        {{else}}
-          ERR: Gradient is empty.
-        {{/each-in}}
-      </div>
+          <div id="{{concat "ah-gradient-" key}}" class="input-group">
+            <Input @type="text" @class="form-control input-lg" @value={{mut (get this.heatmapRepo.arrayHeatGradient key)}}/>
+          </div>
+        </div>
+      {{else}}
+        ERR: Gradient is empty.
+      {{/each-in}}
+    </div>
+    <div class="d-flex justify-content-end pr-3">
+      {{#bs-button type="primary" onClick=(action "resetArrayHeatGradient") class="float-right"}}
+        Reset to default
+      {{/bs-button}}
+    </div>
     {{/if}}
 
     

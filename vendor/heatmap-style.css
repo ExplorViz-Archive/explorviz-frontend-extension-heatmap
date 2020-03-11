@@ -1,9 +1,43 @@
+#heatmap-legend-container {
+  position:absolute;
+  right: 8%;
+  top: 15%;
+  width: 12vh;
+  height: 45vh;
+
+  border-radius: 0.5rem;
+  border-style: solid;
+  border-width: 1px;
+  border-color: lightgray;
+  background-color: rgb(248, 249, 250);
+} 
+
 #heatmap-legend {
-  position: absolute; 
-  right: 0%;
-  top:15%; 
-  width:100px; 
-  height:400px; 
-  max-height: 50%; 
-  border: 2px solid #000000
+  width: 100%; 
+  height: 100%; 
+}
+
+#legend-canvas {
+  border: 2px solid lightgray
+}
+
+#heatmap-legend-label{
+  width: 100%;
+  height: 100%;
+}
+
+#heatmap-legend-container div{
+  margin: 0px;
+  padding: 0px;
+}
+
+#legend-header{
+  height:15%;
+  font-weight: 600;
+  font-size: 1.8vh;
+}
+
+.row.legend-row {
+  height:85%; 
+  width:100%;
 }
