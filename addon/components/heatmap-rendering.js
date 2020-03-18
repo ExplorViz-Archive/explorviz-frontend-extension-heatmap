@@ -529,6 +529,7 @@ export default RenderingCore.extend({
     let material ;
     // Create a multi material for the simple heat mode
     if (boxEntity.get('foundation') && this.get('useSimpleHeat')) {
+      color = "rgb(255, 255, 255)";
       material = [
         new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
         new THREE.MeshLambertMaterial({color: new THREE.Color(color)}),
@@ -633,6 +634,16 @@ export default RenderingCore.extend({
   },
 
   applyHeatmap(clazzList){
+
+    // Remove the spotligt when using simple heat mode
+    if (this.get("heatmapRepo.useSimpleHeat")) {
+      this.get("scene.children").forEach(child => {
+        if(child.type === "SpotLight") {
+          child.visible = false;
+        }
+      });
+    }
+
     let useSimpleHeat = this.get('useSimpleHeat');
 
     // Get max and add 1 to avoid -0 issues. 
@@ -657,7 +668,8 @@ export default RenderingCore.extend({
       canvas = document.createElement('canvas');
       canvas.width = foundationWidth;
       canvas.height = foundationDepth;
-      simpleHeatMap = simpleHeatHelper.simpleHeatmap(maximumValue, canvas, this.get('heatmapRepo').getSimpleHeatGradient());
+      simpleHeatMap = simpleHeatHelper.simpleHeatmap(maximumValue, canvas, this.get('heatmapRepo').getSimpleHeatGradient(), 
+        this.get('heatmapRepo.heatmapRadius'), this.get('heatmapRepo.blurRadius'));
     }
     
     // Create viewpoint from which the faces of the foundation are computed for each clazz. 
@@ -731,14 +743,12 @@ export default RenderingCore.extend({
     } else if (useSimpleHeat) {
       simpleHeatMap.draw(0.0);
       this.get("foundationMesh").material[2].emissiveMap = new THREE.CanvasTexture(canvas);
-      this.get("foundationMesh").material[2].emissive = new THREE.Color("rgb(50, 50, 50)");
-      this.get("foundationMesh").material[2].emissiveIntensity = 2;
+      this.get("foundationMesh").material[2].emissive = new THREE.Color("rgb(125, 125, 125)");
+      this.get("foundationMesh").material[2].emissiveIntensity = 1;
       this.get("foundationMesh").material[2].needsUpdate = true;
       canvas = null;
       simpleHeatMap = null;
     }
-
-    // this.debug(`Applied new ${selectedMode} for ${this.get("heatmapRepo.selectedMetric")}.`);
   }, // END applyHeatmap
 
 

@@ -45,6 +45,8 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   useSimpleHeat = true;
   useHelperLines = true; 
   opacityValue = 0.05;
+  heatmapRadius = 3;
+  blurRadius = 2;
   showLegendValues = true;
   simpleHeatGradient = simpleHeatHelper.getDefaultGradient();
   arrayHeatGradient = arrayHeatHelper.getDefaultGradient();
