@@ -41,6 +41,44 @@
       </div>
     </div>
 
+    {{#if heatmapRepo.useSimpleHeat}}
+    <div class="pl-3">
+      <div class="d-flex justify-content-between">
+        <div>
+          Set heatmap point radius
+          <HelpTooltipRight @title={{this.descriptions.heatmapRadius}} />
+        </div>
+        <BsForm model={{this}} as |form|>
+          <form.element
+            class="d-contents"
+            @controlType="number"
+            @step="1"
+            @value={{heatmapRadius}}
+            @onChange={{action "onHeatmapRadiusChange"}}
+          />
+        </BsForm>
+      </div>
+    </div>
+
+    <div class="pl-3 py-2">
+      <div class="d-flex justify-content-between">
+        <div>
+          Set heatmap blur radius
+          <HelpTooltipRight @title={{this.descriptions.blurRadius}} />
+        </div>
+        <BsForm model={{this}} as |form|>
+          <form.element
+            class="d-contents"
+            @controlType="number"
+            @step="1"
+            @value={{blurRadius}}
+            @onChange={{action "onBlurRadiusChange"}}
+          />
+        </BsForm>
+      </div>
+    </div>
+    {{/if}}
+
     <div class="pl-3">
       <div class="d-flex justify-content-between pr-3">
         <div>
@@ -69,7 +107,7 @@
             @controlType="number"
             @step=".01"
             @value={{opacityValue}}
-            @onChange={{action "onRangeSettingChange"}}
+            @onChange={{action "onOpacityValueChange"}}
           />
         </BsForm>
       </div>
