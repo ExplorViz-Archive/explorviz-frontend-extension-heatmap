@@ -127,8 +127,8 @@ export default Component.extend({
       let largestValue = Math.round(this.get("heatmapRepo.largestValue"))+2;
       if (this.get("heatmapRepo.selectedMode") === "aggregatedHeatmap") {
         minLabel = 0;
-        midLabel = largestValue/2;
-        maxLabel = largestValue;
+        midLabel = largestValue/4;
+        maxLabel = largestValue/2;
       } else {
         minLabel = -largestValue/2;
         midLabel = 0;
