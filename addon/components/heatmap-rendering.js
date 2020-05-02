@@ -556,7 +556,7 @@ export default RenderingCore.extend({
     
     // Create new geometry with segments if the entity is foundation.
     let cube;
-    let segmentScalar = 0.33
+    let segmentScalar = 0.45
     let widthSegments = Math.floor(extension.x * segmentScalar)
     let depthSegments = Math.floor(extension.z * segmentScalar)
     if (boxEntity.get('foundation') && !this.get('useSimpleHeat')) {

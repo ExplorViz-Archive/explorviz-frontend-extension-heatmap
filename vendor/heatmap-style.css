@@ -33,11 +33,19 @@
 
 #legend-header{
   height:15%;
+ 
+}
+
+#legend-header-content{
   font-weight: 600;
   font-size: 1.8vh;
 }
 
+#legend-subheader{
+  height:5%;
+}
+
 .row.legend-row {
-  height:85%; 
+  height:80%; 
   width:100%;
 }

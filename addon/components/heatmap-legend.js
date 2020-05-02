@@ -2,15 +2,31 @@ import Component from '@ember/component';
 import {inject as service} from '@ember/service';
 import layout from '../templates/components/heatmap-legend';
 import $ from 'jquery';
+import debugLogger from 'ember-debug-logger';
 
 export default Component.extend({
   layout,
   tagName: '',
 
+  debug: debugLogger(),
+
   heatmapRepo: service('repos/heatmap-repository'),
   renderingService: service(''),
 
+  descriptions: null,
   listeners: null,
+  destroyed: true,
+
+  init() {
+    this._super(...arguments);
+
+    this.descriptions = this.descriptions || {
+      "aggregatedHeatmap": "Aggregates subsequent heatmaps by adding a part of the previous metric score to the new value.",
+      "windowedHeatmap": "Compares the latest metric score by difference to a previous one. The heatmap to be compared to is defined by the windowsize in the backend."
+    }
+
+    this.set('destroyed', false);
+  },
 
   didRender(){
     this._super(...arguments);
@@ -21,9 +37,9 @@ export default Component.extend({
     this.initListeners()
   },
 
-  willDestroy() {
-    this._super(...arguments);
+  willDestroyElement() {
     this.cleanup();
+    this._super(...arguments);
   },
 
   initHeader(){
@@ -33,7 +49,8 @@ export default Component.extend({
     } else if (this.get("heatmapRepo.selectedMode") === "windowedHeatmap") {
       header = "Windowed Heatmap";
     }
-    $('#legend-header').text(header);
+    $('#legend-header-content').text(header);
+    $('#legend-subheader').text('Metric score:')
   },
 
   initLegend(){
@@ -99,10 +116,12 @@ export default Component.extend({
   },
 
   cleanup() {
+    this.debug('Cleaning legend listeners.')
     this.get('listeners').forEach(([service, event, listenerFunction]) => {
       this.get(service).off(event, listenerFunction);
     });
     this.set('listeners', null);
+    this.set('destroyed', true);
   },
 
   cleanAndUpdate(){
@@ -116,6 +135,10 @@ export default Component.extend({
   },
 
   updateLabel() {
+    if (this.get("destroyed")) {
+      return;
+    }
+
     const canvas = $('#legend-canvas-label').get(0)
     const ctx = canvas.getContext("2d");
 

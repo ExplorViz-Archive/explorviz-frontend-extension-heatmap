@@ -54,9 +54,14 @@ export default class HeatmapListener extends Service.extend(Evented
       
       if (jsonHeatmap && jsonHeatmap.hasOwnProperty('data')) {
         
-        this.debug(`Received new Heatmap.`)
+        this.debug(`Received new Heatmap.`);
         if (!this.pauseVisualizationReload) {
 
+          // this.store.unloadAll('heatmap');
+          // this.store.unloadAll('landscape-metric-collection');
+          // this.store.unloadAll('landscape-metric');
+          // this.store.unloadAll('application-metric');
+          // this.store.unloadAll('clazz-metric');
           
           const heatmapRecord = this.store.push(jsonHeatmap);
   
@@ -73,8 +78,9 @@ export default class HeatmapListener extends Service.extend(Evented
               })
             })
   
-            set(this.heatmapRepo, "metrics", metrics)
-            this.debug("Updated metric list.")
+            set(this.heatmapRepo, "metrics", metrics);
+            set(this.heatmapRepo, "windowsize", jsonHeatmap.data.attributes.windowsize);
+            this.debug("Updated metric list.");
           }
   
           this.get('heatmapRepo').updateLatestHeatmap(heatmapRecord);

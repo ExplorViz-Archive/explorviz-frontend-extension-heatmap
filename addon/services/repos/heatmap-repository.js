@@ -44,13 +44,12 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   selectedMode = "aggregatedHeatmap";
   useSimpleHeat = true;
   useHelperLines = true; 
-  opacityValue = 0.05;
-  heatmapRadius = 4;
-  blurRadius = 3;
+  opacityValue = 0.01;
+  heatmapRadius = 2;
+  blurRadius = 1;
   showLegendValues = true;
   simpleHeatGradient = simpleHeatHelper.getDefaultGradient();
   arrayHeatGradient = arrayHeatHelper.getDefaultGradient();
-
 
   debug = debugLogger();
 
@@ -172,7 +171,7 @@ export default class HeatmapRepository extends Service.extend(Evented) {
     this.set("latestClazzMetrics", null);
     this.set("selectedMetric", null);
     this.set("applicationID", null);
-    this.set("metrics", null);
+    // this.set("metrics", null);
     this.set("largestValue", null);
   }
 

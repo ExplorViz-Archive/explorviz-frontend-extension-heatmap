@@ -1,5 +1,16 @@
 <div id="heatmap-legend-container" class="container p-2">
     <div id="legend-header">
+    <span id="legend-header-content">
+    </span> 
+    {{#if (eq this.heatmapRepo.selectedMode "aggregatedHeatmap")}}
+        <HelpTooltipRight @title={{this.descriptions.aggregatedHeatmap}} />
+    {{else}}
+        <HelpTooltipRight @title={{this.descriptions.windowedHeatmap}} />
+    {{/if}}
+    </div>
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col8" id="legend-subheader"></div>
     </div>
     <div class="row legend-row">
         <div id="heatmap-legend" class="col-4">
