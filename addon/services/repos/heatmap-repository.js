@@ -44,9 +44,9 @@ export default class HeatmapRepository extends Service.extend(Evented) {
   selectedMode = "aggregatedHeatmap";
   useSimpleHeat = true;
   useHelperLines = true; 
-  opacityValue = 0.01;
+  opacityValue = 0.03;
   heatmapRadius = 2;
-  blurRadius = 1;
+  blurRadius = 0;
   showLegendValues = true;
   simpleHeatGradient = simpleHeatHelper.getDefaultGradient();
   arrayHeatGradient = arrayHeatHelper.getDefaultGradient();

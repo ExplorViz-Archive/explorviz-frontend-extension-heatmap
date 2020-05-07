@@ -25,9 +25,9 @@ export default Component.extend({
     ];
 
     this.descriptions = this.descriptions ||  {
-      heatmapMode: "Aggregated Heatmap: The previous heatmaps influence the current"  
-        + " value to a certain amount. Windowed Heatmap: The landscape metrics are" 
-        + " compared with the respective value of the time window specified in the backend.",
+      heatmapMode: "Aggregated Heatmap: The values of previous heatmaps are aggregated and added to the"  
+        + " current value. Windowed Heatmap: The metrics are shown as a difference to the previous heatmap." 
+        + " The windowsize can be configured in the backend.",
       visualizationMode: "Use a heatmap visualized with simpleheat or an array based heatmap.",
       helperLines: "Show the helper lines to determine which point on the heatmap belongs to which class.",
       shGradient: "Configure the simple heat gradient. Use either rgb, hex or css-style format.",

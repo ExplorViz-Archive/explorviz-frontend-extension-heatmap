@@ -4,7 +4,7 @@
     <div class="pl-3 py-2">
       <div class="d-flex justify-content-between pr-1">
         <div>
-          Choose heatmap mode
+          Choose heatmap type
           <HelpTooltipRight @title={{this.descriptions.heatmapMode}} />
         </div>
         <div class="align-items-end">
@@ -26,14 +26,14 @@
     <div class="pl-3">
       <div class="d-flex justify-content-between pr-3">
         <div>
-          Use simple heat visualization
+          Choose visualization style
           <HelpTooltipRight @title={{this.descriptions.visualizationMode}} />
         </div>
         <div>
         <XToggle
           @theme='skewed'
-          @onLabel='Yes'
-          @offLabel='No'
+          @onLabel='simple'
+          @offLabel='array'
           @value={{get this.heatmapRepo "useSimpleHeat"}}
           @onToggle={{action (mut (get this.heatmapRepo "useSimpleHeat"))}}
         />

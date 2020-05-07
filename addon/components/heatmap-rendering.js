@@ -701,7 +701,8 @@ export default RenderingCore.extend({
       let firstIntersection = raycaster.intersectObject(this.get("foundationMesh"))[0];
 
       if (this.get('useHelperLines')) {
-        let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+        // let material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+        let material = new THREE.LineBasicMaterial( { color: 0x808080 } );
         let points = [];
         // points.push(viewPos)
         points.push(clazzPos)

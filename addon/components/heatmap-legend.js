@@ -44,13 +44,18 @@ export default Component.extend({
 
   initHeader(){
     let header = "Header";
+    let subheader = "Subheader";
     if (this.get("heatmapRepo.selectedMode") === "aggregatedHeatmap") {
       header = "Aggregated Heatmap";
+      subheader = "Aggregated score:"
     } else if (this.get("heatmapRepo.selectedMode") === "windowedHeatmap") {
       header = "Windowed Heatmap";
+      subheader = "Value difference:";
     }
+
     $('#legend-header-content').text(header);
-    $('#legend-subheader').text('Metric score:')
+    $('#legend-subheader').text(subheader)
+    
   },
 
   initLegend(){
