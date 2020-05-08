@@ -33,6 +33,8 @@ export default Component.extend({
     this.addStatusIcon();
   },
 
+  // Add back the status icon (dropdown arrow) four our componenet that is removed in
+  // explorviz-frontend\app\components\visualization\page-setup\navbar\application-search.js Line 29.
   addStatusIcon(){
     $(".metric-selector").first().append("<span class='ember-power-select-status-icon'></span>");
   }
