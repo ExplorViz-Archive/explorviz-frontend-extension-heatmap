@@ -1,5 +1,6 @@
 import Component from '@ember/component';
 import { inject as service } from '@ember/service';
+import $ from 'jquery';
 
 import layout from '../../../../templates/components/visualization/page-setup/navbar/metric-selector';
 
@@ -26,4 +27,15 @@ export default Component.extend({
     this.set('choice', this.get('metrics')[0]);
     this.set('heatmapRepository.selectedMetric', this.get('choice.typeName'));
   },
+
+  didRender(){
+    this._super(...arguments);
+    this.addStatusIcon();
+  },
+
+  // Add back the status icon (dropdown arrow) four our componenet that is removed in version 1.5.0 of ExplorViz 
+  // at explorviz-frontend\app\components\visualization\page-setup\navbar\application-search.js Line 29.
+  addStatusIcon(){
+    $(".metric-selector").first().append("<span class='ember-power-select-status-icon'></span>");
+  }
 });

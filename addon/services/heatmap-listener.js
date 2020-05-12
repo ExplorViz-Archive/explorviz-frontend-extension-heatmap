@@ -1,13 +1,14 @@
 import Service from '@ember/service';
 import config from 'explorviz-frontend/config/environment';
 import { inject as service } from "@ember/service";
-// import { getOwner } from '@ember/application';
 import Evented from '@ember/object/evented';
-// import ModelUpdater from 'explorviz-frontend/utils/model-update';
 import debugLogger from 'ember-debug-logger';
 import { set, computed } from '@ember/object';
 
 /*global EventSourcePolyfill*/
+
+
+
 export default class HeatmapListener extends Service.extend(Evented
 ){
   // https://github.com/segmentio/sse/blob/master/index.js
@@ -17,7 +18,6 @@ export default class HeatmapListener extends Service.extend(Evented
   @service('landscape-listener') landscapeListener;
   @service('repos/heatmap-repository') heatmapRepo;
   @service('repos/landscape-repository') landscapeRepo;
-  
   es = null;
 
   @computed('landscapeListener.pauseVisualizationReload')
@@ -31,7 +31,7 @@ export default class HeatmapListener extends Service.extend(Evented
     set(this, 'content', []);
 
     const url = config.APP.API_ROOT;
-    // const { access_token } = this.session.data.authenticated;
+    const { access_token } = this.session.data.authenticated;
 
     // Close former event source. Multiple (>= 6) instances cause the ember store to no longer work
     let es = this.es;
@@ -42,9 +42,9 @@ export default class HeatmapListener extends Service.extend(Evented
     // ATTENTION: This is a polyfill (see vendor folder)
     // Replace if original EventSource API allows HTTP-Headers
     set(this, 'es', new EventSourcePolyfill(`${url}/v1/heatmap/broadcast/`, {
-      // headers: {
-      //   Authorization: `Bearer ${access_token}`
-      // }
+      headers: {
+        Authorization: `Bearer ${access_token}`
+      }
     }));
 
     es = this.es;
