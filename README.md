@@ -23,11 +23,12 @@ Installation
 
 3. Install this extension via `ember install https://github.com/ExplorViz/explorviz-frontend-extension-heatmap.git`.
 
+4. Start the ExplorViz frontend either locally with `ember serve` or configure the `API.ROOT` in the **environment.js** file of the frontend and then use `ember build --environment=production` in order to deploy the frontend on a web server.
 
 Usage
 ------------------------------------------------------------------------------
 
-The extension add the `/heatmap` route to the visualizaion of ExplorViz, which can be called from the navbar on the left. Metrics can be selected in the toolbar using the dropdown menu. 
+The extension adds the `/heatmap` route to the visualizaion of ExplorViz, which can be called from the navbar on the left. Metrics can be selected in the toolbar using the dropdown menu. 
 Depending on the chosen heatmap type, which can be configured in the *heatmap* tab of the configuration route, the colors of the heatmap either show the difference to a previous heatmap or an aggregated value of former heatmaps.
 For better comprehension of the represented color values we added a legend to the visualization, which can be toggled on and off with the new button below the `Back to Landscape` button. 
 
