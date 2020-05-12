@@ -36,7 +36,7 @@ In the configuration we provide the selection of the individual heatmap types an
 Furthermore, we added some preferences to customize the visualization.
 The users can configure the used color gradients by changing the corresponding color values.
 Color values can be insterted as rgb, hex or other css compliant strings.
-The can, for instance be obtained from this [color picker](https://www.w3schools.com/colors/colors_picker.asp).
+They can, for instance be obtained from this [color picker](https://www.w3schools.com/colors/colors_picker.asp).
 
 In order to provide information about the different metrics and configuration options we added tooltips to all new features.
 
