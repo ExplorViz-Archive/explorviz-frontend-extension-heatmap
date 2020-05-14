@@ -23,7 +23,7 @@ Installation
 
 3. Install this extension via `ember install https://github.com/ExplorViz/explorviz-frontend-extension-heatmap.git`.
 
-4. Start the ExplorViz frontend either locally with `ember serve` or configure the `API.ROOT` in the **environment.js** file of the frontend and then use `ember build --environment=production` in order to deploy the frontend on a web server.
+4. Start the ExplorViz frontend either locally with `ember serve` or use `ember build --environment=production` and configure the `API.ROOT` environment variable to your machines IP address.
 
 Usage
 ------------------------------------------------------------------------------
