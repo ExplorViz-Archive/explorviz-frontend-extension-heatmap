@@ -50,3 +50,16 @@
   height:80%; 
   width:100%;
 }
+
+#heatmap-config .x-toggle-flat.x-toggle-btn {
+  border: 4px solid #c2c2c2;
+}
+
+#heatmap-config .x-toggle:checked + label .x-toggle-flat.x-toggle-btn::after {
+  left: 50%;
+  background: #7fc6a6;
+}
+
+#heatmap-config .x-toggle-flat.x-toggle-btn::after {
+  background: #c2c2c2;
+}
