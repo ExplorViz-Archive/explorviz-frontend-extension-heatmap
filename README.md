@@ -1,7 +1,7 @@
 ExplorViz-Frontend-Extension-Heatmap
 ==============================================================================
 
-This extension adds a new route to the ExplorViz frontend to visualize dynamicities, i.e. the progress, of certain metrics. The metrics arre added as a heatmap to the application visualization in the application perspective. The related backend extension can be found [here](https://github.com/ExplorViz/explorviz-backend-extension-heatmap).
+This extension adds a new route to the ExplorViz frontend to visualize dynamicities, i.e. the progress, of certain metrics. The metrics are added as a heatmap to the application visualization in the application perspective. The related backend extension can be found [here](https://github.com/ExplorViz/explorviz-backend-extension-heatmap).
 
 
 Compatibility
